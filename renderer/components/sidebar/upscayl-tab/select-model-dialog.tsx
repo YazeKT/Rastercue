@@ -17,6 +17,7 @@ import { selectedModelIdAtom } from "@/atoms/user-settings-atom";
 import { customModelIdsAtom } from "@/atoms/models-list-atom";
 import { favouriteModelsAtom } from "@/atoms/rastercue-workflows-atom";
 import useTranslation from "@/components/hooks/use-translation";
+import useModelAvailability from '@/components/hooks/use-model-availability';
 
 const SelectModelDialog = () => {
   const t = useTranslation();
@@ -27,6 +28,7 @@ const SelectModelDialog = () => {
   const [focused, setFocused] = useState(selected);
   const [query, setQuery] = useState("");
   const [onlyFavourites, setOnlyFavourites] = useState(false);
+  const { builtIn, refresh } = useModelAvailability();
   const ids = Array.from(
     new Set([
       ...Object.keys(MODELS),
@@ -34,7 +36,7 @@ const SelectModelDialog = () => {
       ...imported,
     ]),
   );
-  const available = (id: string) => id in MODELS || imported.includes(id);
+  const available = (id: string) => id in MODELS ? builtIn?.[id] === true : imported.includes(id);
   const matches = ids.filter(
     (id) =>
       (!onlyFavourites || favourites.includes(id)) &&
@@ -61,7 +63,7 @@ const SelectModelDialog = () => {
       open={open}
       onOpenChange={(value) => {
         setOpen(value);
-        if (value) setFocused(selected);
+        if (value) { setFocused(selected); void refresh(); }
       }}
     >
       <DialogTrigger asChild>
@@ -121,7 +123,7 @@ const SelectModelDialog = () => {
                   <span className="mt-1 block text-xs opacity-60">
                     {getModelScale(id)}× native ·{" "}
                     {id in MODELS
-                      ? "Built-in"
+                      ? builtIn === null ? 'Checking availability' : available(id) ? 'Bundled' : 'Not bundled'
                       : available(id)
                         ? "Imported"
                         : "Import required"}
@@ -165,8 +167,9 @@ const SelectModelDialog = () => {
             </div>
             {!available(focused) && (
               <p className="mt-3 rounded border border-primary/30 bg-primary/10 p-3">
-                Not imported. Select your custom models folder in Settings
-                first. Catalogue entries do not install or download weights.
+                {focused in MODELS
+                  ? builtIn === null ? 'Model availability could not be confirmed. Reopen the library to retry.' : 'Not bundled—import a creator-authorized pair as a custom model, using a distinct custom filename for both files. Choose that imported entry; Rastercue does not silently substitute a different model.'
+                  : 'Not imported. Select your custom models folder in Settings first. Catalogue entries do not install or download weights.'}
               </p>
             )}
             <p
@@ -188,26 +191,6 @@ const SelectModelDialog = () => {
                 </div>
               ))}
             </dl>
-            {focused in MODELS && (
-              <figure className="mt-4">
-                <div className="grid grid-cols-2 gap-px overflow-hidden rounded bg-border">
-                  <img
-                    src={`public:///model-comparison/${focused}/before.webp`}
-                    alt={`${label(focused)} upstream example before`}
-                    className="w-full"
-                  />
-                  <img
-                    src={`public:///model-comparison/${focused}/after.webp`}
-                    alt={`${label(focused)} upstream example after`}
-                    className="w-full"
-                  />
-                </div>
-                <figcaption className="mt-1 text-xs opacity-60">
-                  Upstream example: before / after. Your image may behave
-                  differently.
-                </figcaption>
-              </figure>
-            )}
             <div className="mt-5 border-t border-border pt-3">
               <p className="mb-2 font-semibold">
                 Provenance and creator guidance

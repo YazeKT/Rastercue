@@ -14,7 +14,7 @@ function load(prepare, spawn) {
   }).outputText;
   const exports = {};
   const stubs = {
-    child_process:{spawn,ChildProcess}, stream:{PassThrough},
+    child_process:{spawn,ChildProcess}, stream:{PassThrough}, path,
     './get-resource-paths':{execPath:'original-engine'},
     './prepare-jpeg-input':{prepareJpegInput:prepare},
   };
@@ -98,7 +98,7 @@ test('non-JPEG formats use the exact original synchronous native process path', 
       launches++;
       assert.equal(binary,'original-engine');
       assert.deepEqual(Array.from(args),expected);
-      assert.equal(options.cwd,undefined);
+      assert.equal(options.cwd,path.dirname('original-engine'));
       assert.equal(options.detached,false);
       return native;
     });
@@ -107,5 +107,19 @@ test('non-JPEG formats use the exact original synchronous native process path', 
     assert.equal(launches,1);
     assert.equal(job.kill(),true);
     assert.equal(kills,1);
+  }
+});
+
+test('nonzero native exit is an error before legacy close handlers can infer success', async () => {
+  for(const format of ['png','jpg']){
+    const native=Object.assign(new ChildProcess(),{stderr:new PassThrough(),stdout:new PassThrough(),spawnargs:['original-engine'],kill:()=>true});
+    const spawn=load(async()=>({args:['-f','jpg'],cleanup:async()=>{}}),()=>native);
+    const job=spawn(['-f',format],()=>{}),events=[];
+    job.process.on('error',error=>events.push(['error',error.message]));
+    job.process.on('close',code=>events.push(['close',code]));
+    await new Promise(resolve=>setImmediate(resolve));
+    native.emit('close',3221225477,null);
+    assert.equal(events[0][0],'error');assert.match(events[0][1],/exited unsuccessfully/);
+    assert.deepEqual(events[1],['close',3221225477]);
   }
 });

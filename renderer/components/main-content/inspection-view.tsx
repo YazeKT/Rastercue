@@ -71,7 +71,7 @@ export default function InspectionView({ source, output, setDimensions }: {
       onLoad={e => {
         const d={width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight};
         setDimensions?.(d);
-        if(!output) setPixels(d);
+        setPixels(current => !output || current.width === 1 ? d : current);
       }}/>
     {output && <>
       <div className="comparison-after" style={{clipPath:"inset(0 0 0 "+divider+"%)"}}>

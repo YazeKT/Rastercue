@@ -1,14 +1,18 @@
 # Security policy
 
-Rastercue is currently a local release candidate, not a hardened or audited sandbox. Do not process untrusted files or import unknown native model files on a sensitive workstation without appropriate isolation.
+Rastercue is a local desktop application. The Windows beta is unsigned, not independently audited or fully sandboxed. Process trusted images and creator-authorized models. History, thumbnails and logs can be sensitive.
 
 ## Known inherited limitations
 
-The existing Electron window retains nodeIntegration:true and webSecurity:false for compatibility with the working local-file preview. These require an isolated hardening project and regression testing before stronger security claims. Narrow new history/update interfaces validate sender/path/job ownership, but they do not make the inherited renderer fully sandboxed. Dependencies were not broadly upgraded in this UI fork; audit findings must be assessed separately.
+Renderer/worker Node integration is disabled; context isolation and web security are enabled. Unexpected navigation/redirects and webviews are denied. Permission requests are denied except sanitised clipboard writing from the application window for copying logs. External URLs are credential-free HTTPS only. The preload allowlists channels and strips privileged Electron events; command dispatch verifies the expected top-level application frame. Public asset paths cannot escape the renderer directory. History/update interfaces validate sender/path/job ownership.
+
+The preload explicitly retains `sandbox: false` for inherited OS/local-module imports. It is not a fully sandboxed preload. A bundled sandbox-compatible preload and wider IPC payload audit remain future work. There is no guarantee against every malformed native image/model file.
 
 History thumbnails/paths and logs may be sensitive. Files are local; no telemetry, automatic image upload or online log submission is included. Updates contact Rastercue GitHub Releases, and external links contact their destinations. Keep model rights and model-file trust separate concerns.
 
-At the18September2026 source-publication audit, `npm audit --omit=dev` reported23 dependency advisories (1low,3moderate,19high), including Electron, updater/runtime and sharp transitive concerns. This is not a clean security audit. Package classification can include runtime-shipped Electron even where declared development-only. Do not distribute binary releases until these are triaged and necessary isolated updates/hardening are regression-tested. No automatic `audit fix --force` or engine replacement was performed. Advisory state changes over time; rerun the audit for each release.
+The initial publication reported 23 production-classified advisories. A separate security pass updated Electron, builder, updater, Sharp, metadata tooling and patched build dependencies. Next remains on its existing major; a scoped PostCSS override removes its vulnerable nested dependency. On 18 September 2026 the refreshed lockfile reported zero known advisories in both full and production npm audits. This is a point-in-time registry result, not proof that vulnerabilities do not exist. Repeat audits and packaged regressions for every release. Native engine bytes, protected handlers and model IDs remain unchanged.
+
+Unsigned Windows assets lack publisher authenticity verification. Checksums detect changes but are not signatures. Hosted older-version update installation has not been verified. Disable updates if this does not meet deployment requirements. Microsoft runtimes are external prerequisites obtained directly from Microsoft, not redistributed. Windows testing does not verify macOS/Linux.
 
 ## Reporting
 

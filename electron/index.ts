@@ -1,7 +1,7 @@
 import prepareNext from "electron-next";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
-import { app, ipcMain, protocol } from "electron";
+import { app, ipcMain, protocol, dialog, shell } from "electron";
 import { ELECTRON_COMMANDS } from "../common/electron-commands";
 import logit from "./utils/logit";
 import openFolder from "./commands/open-folder";
@@ -22,6 +22,8 @@ import { FEATURE_FLAGS } from "../common/feature-flags";
 import settings from "electron-settings";
 import pasteImage from "./commands/paste-image";
 import path from "path";
+import fs from "fs";
+import { builtInModelAvailability } from './utils/model-availability';
 
 // INITIALIZATION
 app.setName('Rastercue');
@@ -44,6 +46,12 @@ app.on("ready", async () => {
         process.env.NODE_ENV === "development" ? "public" : "out",
         filePath,
       );
+      const publicRoot = path.join(app.getAppPath(), 'renderer', process.env.NODE_ENV === 'development' ? 'public' : 'out');
+      const relative = path.relative(publicRoot, asarPath);
+      if (relative.startsWith('..') || path.isAbsolute(relative)) {
+        callback({ error: -10 }); // ACCESS_DENIED: no traversal outside app assets.
+        return;
+      }
       callback(asarPath);
     });
     logit("🚃 App Path: ", app.getAppPath());
@@ -54,6 +62,14 @@ app.on("ready", async () => {
   if (rastercueWindow) {
     registerRastercueHistory(rastercueWindow);
     registerRastercueUpdates(rastercueWindow);
+    if (process.platform === 'win32' && app.isPackaged && !fs.existsSync(path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'vcomp140.dll'))) {
+      void dialog.showMessageBox(rastercueWindow, {
+        type: 'warning', title: 'Microsoft runtime required',
+        message: 'Install the Microsoft Visual C++ x64 Redistributable before upscaling.',
+        detail: 'Rastercue uses the unchanged native engine, which requires the release OpenMP runtime. Download it directly from Microsoft, then restart Rastercue. No Microsoft runtime DLLs are redistributed in this package.',
+        buttons: ['Microsoft download page', 'Later'], defaultId: 0, cancelId: 1,
+      }).then(({response}) => { if(response===0) return shell.openExternal('https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist'); }).catch(console.error);
+    }
   }
 
   log.info(
@@ -89,30 +105,44 @@ if (FEATURE_FLAGS.APP_STORE_BUILD) {
   app.commandLine.appendSwitch("in-process-gpu");
 }
 
-ipcMain.on(ELECTRON_COMMANDS.STOP, stop);
+// Only the isolated, top-level application frame may invoke engine or file
+// commands. Keep the original handlers and their payloads unchanged.
+const trustedRequest = (event: any) => {
+  const win = getMainWindow();
+  return !!win && event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame;
+};
+const onTrusted = (channel: string, handler: (...args: any[]) => any) => ipcMain.on(channel, (event, ...args) => {
+  if (trustedRequest(event)) handler(event, ...args);
+});
+const handleTrusted = (channel: string, handler: (...args: any[]) => any) => ipcMain.handle(channel, (event, ...args) => {
+  if (!trustedRequest(event)) throw new Error('Untrusted application request.');
+  return handler(event, ...args);
+});
 
-ipcMain.on(ELECTRON_COMMANDS.OPEN_FOLDER, openFolder);
+onTrusted(ELECTRON_COMMANDS.STOP, stop);
 
-ipcMain.handle(ELECTRON_COMMANDS.SELECT_FOLDER, selectFolder);
+onTrusted(ELECTRON_COMMANDS.OPEN_FOLDER, openFolder);
 
-ipcMain.handle(ELECTRON_COMMANDS.SELECT_FILE, selectFile);
+handleTrusted(ELECTRON_COMMANDS.SELECT_FOLDER, selectFolder);
 
-ipcMain.on(ELECTRON_COMMANDS.GET_MODELS_LIST, getModelsList);
+handleTrusted(ELECTRON_COMMANDS.SELECT_FILE, selectFile);
 
-ipcMain.handle(
+onTrusted(ELECTRON_COMMANDS.GET_MODELS_LIST, getModelsList);
+
+handleTrusted(
   ELECTRON_COMMANDS.SELECT_CUSTOM_MODEL_FOLDER,
   customModelsSelect,
 );
 
-ipcMain.on(ELECTRON_COMMANDS.UPSCAYL, imageUpscayl);
+onTrusted(ELECTRON_COMMANDS.UPSCAYL, imageUpscayl);
 
-ipcMain.on(ELECTRON_COMMANDS.FOLDER_UPSCAYL, batchUpscayl);
+onTrusted(ELECTRON_COMMANDS.FOLDER_UPSCAYL, batchUpscayl);
 
-ipcMain.on(ELECTRON_COMMANDS.DOUBLE_UPSCAYL, doubleUpscayl);
+onTrusted(ELECTRON_COMMANDS.DOUBLE_UPSCAYL, doubleUpscayl);
 
-ipcMain.on(ELECTRON_COMMANDS.PASTE_IMAGE, pasteImage);
+onTrusted(ELECTRON_COMMANDS.PASTE_IMAGE, pasteImage);
 
-ipcMain.handle("get-gpu-info", async () => {
+handleTrusted("get-gpu-info", async () => {
   try {
     return await app.getGPUInfo("complete");
   } catch (error) {
@@ -121,8 +151,10 @@ ipcMain.handle("get-gpu-info", async () => {
   }
 });
 
-ipcMain.handle("get-app-version", () => {
+handleTrusted("get-app-version", () => {
   return `${app.getVersion()} ${
     FEATURE_FLAGS.APP_STORE_BUILD ? "MAC-APP-STORE" : "FOSS"
   }`;
 });
+
+handleTrusted('rastercue-models:availability', () => builtInModelAvailability(modelsPath));

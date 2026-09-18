@@ -17,10 +17,13 @@ export default function MoreOptionsDrawer({resetImagePaths}: {
   const stats=useAtomValue(userStatsAtom);
   const customIds=useAtomValue(customModelIdsAtom);
   const store=useStore();
-  function restore(saved:JobSettings) {
+  async function restore(saved:JobSettings) {
     if(store.get(settingsAtoms.progressAtom)){window.alert("Wait for the current job to finish before restoring settings.");return;}
     const model=String(saved.model||"");
-    if(!Object.keys(MODELS).includes(model)&&!customIds.includes(model)){
+    let available=false;
+    try {available=model in MODELS ? (await window.electron.getBuiltInModels())[model]===true : customIds.includes(model);} catch {window.alert('Could not verify model availability. No settings were changed.');return;}
+    if(store.get(settingsAtoms.progressAtom)){window.alert('Wait for the current job to finish. No settings were changed.');return;}
+    if(!available){
       window.alert("This model is missing. Import it before restoring this job's settings. No settings were changed.");return;
     }
     store.set(settingsAtoms.selectedModelIdAtom,model);

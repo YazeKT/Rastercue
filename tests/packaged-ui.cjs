@@ -5,7 +5,7 @@ const os = require('node:os');
 (async () => {
   const root = path.resolve(__dirname, '..');
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'rastercue-ui-'));
-  const app = await _electron.launch({ executablePath: path.join(root,'dist/win-unpacked/Rastercue.exe'), env: {...process.env, RASTERCUE_TEST_USER_DATA:profile}, timeout:90000 });
+  const app = await _electron.launch({ executablePath: process.env.RASTERCUE_TEST_EXE||path.join(root,'dist/win-unpacked/Rastercue.exe'), env: {...process.env, RASTERCUE_TEST_USER_DATA:profile}, timeout:90000 });
   try {
     const page = await app.firstWindow();
     await page.waitForFunction(() => !!window.rastercue);
@@ -27,7 +27,8 @@ const os = require('node:os');
     if(!(await page.getByRole('button',{name:'Choose output folder',exact:true}).isVisible())) throw new Error('Output workflow page missing');
     await page.screenshot({path:path.join(root,'tests/artifacts/rastercue-small.png')});
     const output=path.join(profile,'outputs');fs.mkdirSync(output);
-    await page.evaluate(format=>{localStorage.setItem('selectedModelId',JSON.stringify('upscayl-lite-4x'));localStorage.setItem('saveImageAs',JSON.stringify(format));},process.env.RASTERCUE_TEST_FORMAT||'png');
+    await page.evaluate(({format,model})=>{localStorage.setItem('selectedModelId',JSON.stringify(model));localStorage.setItem('saveImageAs',JSON.stringify(format));},{format:process.env.RASTERCUE_TEST_FORMAT||'png',model:process.env.RASTERCUE_TEST_MODEL||'upscayl-standard-4x'});
+    if(process.env.RASTERCUE_TEST_TILE_SIZE)await page.evaluate(tile=>localStorage.setItem('tileSize',JSON.stringify(Number(tile))),process.env.RASTERCUE_TEST_TILE_SIZE);
     await page.reload();
     await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows()[0].setSize(1366,728));
     await app.evaluate(({dialog},{input,output})=>{dialog.showOpenDialog=async options=>({canceled:false,filePaths:[options.properties.includes('openFile')?input:output]});},{input:process.env.RASTERCUE_TEST_INPUT||path.join(root,'tests/baseline-input.png'),output});
@@ -44,6 +45,7 @@ const os = require('node:os');
     console.log('Packaged UI single job:',completed);
     fs.writeFileSync(path.join(root,'tests/artifacts/last-packaged-job.json'),JSON.stringify(completed,null,2));
     if(process.env.RASTERCUE_TEST_FORMAT==='jpg')fs.copyFileSync(completed.files[0].output.path,path.join(root,'tests/artifacts/fixed-jpg.jpg'));
+    await page.waitForFunction(()=>{const image=document.querySelector('img[alt="Upscaled"]');return image?.complete&&image.naturalWidth>1;},null,{timeout:10000});
     await page.screenshot({path:path.join(root,'tests/artifacts/rastercue-comparison.png')});
   } finally { await app.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1});

@@ -5,6 +5,7 @@ import { ELECTRON_COMMANDS } from "../common/electron-commands";
 import { fetchLocalStorage } from "./utils/config-variables";
 import electronIsDev from "electron-is-dev";
 import { format } from "url";
+import { isSafeExternalURL, isTrustedDocument } from './utils/security-policy';
 
 let mainWindow: BrowserWindow | undefined;
 
@@ -22,9 +23,13 @@ const createMainWindow = () => {
     show: false,
     backgroundColor: "#14161B",
     webPreferences: {
-      nodeIntegration: true,
-      nodeIntegrationInWorker: true,
-      webSecurity: false,
+      nodeIntegration: false,
+      nodeIntegrationInWorker: false,
+      contextIsolation: true,
+      webSecurity: true,
+      // The existing preload imports local modules and os. Context isolation
+      // protects the renderer; bundling the preload is a separate sandbox task.
+      sandbox: false,
       preload: join(__dirname, "preload.js"),
     },
     titleBarStyle: getPlatform() === "mac" ? "hiddenInset" : "default",
@@ -38,12 +43,22 @@ const createMainWindow = () => {
         slashes: true,
       });
 
-  mainWindow.loadURL(url);
-
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+  mainWindow.webContents.setWindowOpenHandler(({ url: target }) => {
+    if (isSafeExternalURL(target)) void shell.openExternal(target).catch(console.error);
     return { action: "deny" };
   });
+  const preventUntrustedNavigation = (event: { preventDefault: () => void }, target: string) => {
+    if (!isTrustedDocument(target, url)) {
+      event.preventDefault();
+      if (isSafeExternalURL(target)) void shell.openExternal(target).catch(console.error);
+    }
+  };
+  mainWindow.webContents.on('will-navigate', preventUntrustedNavigation);
+  mainWindow.webContents.on('will-redirect', preventUntrustedNavigation);
+  mainWindow.webContents.on('will-attach-webview', event => event.preventDefault());
+  mainWindow.webContents.session.setPermissionRequestHandler((contents, permission, callback) => callback(contents === mainWindow?.webContents && permission === 'clipboard-sanitized-write'));
+  mainWindow.webContents.session.setPermissionCheckHandler((contents, permission) => contents === mainWindow?.webContents && permission === 'clipboard-sanitized-write');
+  mainWindow.loadURL(url);
 
   mainWindow.once("ready-to-show", () => {
     if (!mainWindow) return;

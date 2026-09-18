@@ -50,6 +50,12 @@ export const MODEL_CATALOG: ModelGuide[] = [
     "Standard",
     "Upstream recommends this for most images.",
     "Start with a general photograph and inspect edges and faces.",
+    {
+      creator: "Xintao Wang / Real-ESRGAN",
+      rights: "BSD-3-Clause. Exact creator model pair verified; retain copyright, conditions and disclaimer when redistributing.",
+      evidence: "Both files match original creator realesrgan-x4plus release bytes. See Rastercue model redistribution evidence.",
+      sources: [upstream, "https://github.com/xinntao/Real-ESRGAN/releases/tag/v0.2.5.0", "https://github.com/YazeKT/Rastercue/blob/main/docs/MODEL-REDISTRIBUTION.md"],
+    },
   ),
   guide(
     "upscayl-lite-4x",
@@ -101,6 +107,12 @@ export const MODEL_CATALOG: ModelGuide[] = [
     "Digital Art",
     "Digital art and illustrations, according to upstream.",
     "Try illustrated linework; inspect contours and flat fills.",
+    {
+      creator: "Xintao Wang / Real-ESRGAN",
+      rights: "BSD-3-Clause. Exact creator model pair verified; retain full licence notice when redistributing.",
+      evidence: "Both files match original creator realesrgan-x4plus-anime release bytes.",
+      sources: [upstream, "https://github.com/xinntao/Real-ESRGAN/releases/tag/v0.2.5.0", "https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE"],
+    },
   ),
   guide(
     "4x_NMKD-Siax_200k",
@@ -191,8 +203,8 @@ export const MODEL_CATALOG: ModelGuide[] = [
     {
       creator: "Phhofm",
       rights:
-        "Creator declares CC BY 4.0; attribution required. Exact local NCNN conversion identity is not hash-verified.",
-      evidence: "Creator model card plus upstream filename attribution.",
+        "CC BY 4.0. Verified creator FP16 weights with adapted input tensor names/line formatting. Credit Phhofm, link licence and identify adaptation when sharing.",
+      evidence: "Creator weight hash verified; parameter differences documented in Rastercue redistribution evidence.",
       sources: [custom, phhofm + "4xNomos8kSC"],
     },
   ),
@@ -209,7 +221,7 @@ export const MODEL_CATALOG: ModelGuide[] = [
         evidence:
           "Creator anime-video documentation; upstream converted filenames.",
         rights:
-          "Real-ESRGAN project declares BSD-3-Clause. Exact converted weights and accompanying notices must be verified before redistribution.",
+          "BSD-3-Clause. Exact creator files verified; retain full Real-ESRGAN licence notice when redistributing.",
         sources: [
           custom,
           real + "anime_video_model.md",

@@ -35,6 +35,7 @@ import { ELECTRON_COMMANDS } from "@common/electron-commands";
 import useTranslation from "../hooks/use-translation";
 import RastercueLogo from "@/components/icons/rastercue-logo";
 import { desiredOutputNameAtom } from "@/atoms/rastercue-job-atom";
+import { MODELS } from '@common/models-list';
 
 const Sidebar = ({
   setUpscaledImagePath,
@@ -89,6 +90,18 @@ const Sidebar = ({
   const desiredOutputName = useAtomValue(desiredOutputNameAtom);
 
   const upscaylHandler = async () => {
+    if (selectedModelId in MODELS) {
+      try {
+        const availability = await window.electron.getBuiltInModels();
+        if (!availability[selectedModelId]) {
+          toast({ title: 'Selected model is not bundled', description: 'Choose an available model, or import a creator-authorized pair as a distinct custom model. No model was substituted and no job started.' });
+          return;
+        }
+      } catch {
+        toast({ title: 'Could not verify selected model', description: 'Reopen the model library and try again. No job started.' });
+        return;
+      }
+    }
     try {
       await window.rastercue?.setDesiredName(batchMode ? "" : desiredOutputName);
     } catch (error) {

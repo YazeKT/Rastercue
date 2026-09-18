@@ -130,11 +130,11 @@ const MainContent = ({
       return;
     }
     const type = e.dataTransfer.items[0].type;
-    const filePath = e.dataTransfer.files[0].path;
+    const filePath = window.electron.getFilePath(e.dataTransfer.files[0]);
     const extension = e.dataTransfer.files[0].name.split(".").at(-1);
     logit("⤵️ Dropped file: ", JSON.stringify({ type, filePath, extension }));
     if (
-      !type.includes("image") ||
+      !filePath || !type.includes("image") ||
       !VALID_IMAGE_FORMATS.includes(extension.toLowerCase())
     ) {
       logit("🚫 Invalid file dropped");
@@ -190,14 +190,11 @@ const MainContent = ({
           const reader = new FileReader();
           reader.onload = async (event) => {
             const result = event.target?.result;
-            if (typeof result === "string") {
-              file.encodedBuffer = Buffer.from(result, "utf-8").toString(
-                "base64",
-              );
-            } else if (result instanceof ArrayBuffer) {
-              file.encodedBuffer = Buffer.from(new Uint8Array(result)).toString(
-                "base64",
-              );
+            if (typeof result === "string" && result.startsWith('data:') && result.includes(';base64,')) {
+              // Browser-native encoding keeps clipboard support working with
+              // Node integration disabled. The main process receives the same
+              // base64 image bytes as before.
+              file.encodedBuffer = result.slice(result.indexOf(',') + 1);
             } else {
               logit("🚫 Invalid file pasted");
               toast({
@@ -209,7 +206,7 @@ const MainContent = ({
             }
             window.electron.send(ELECTRON_COMMANDS.PASTE_IMAGE, file);
           };
-          reader.readAsArrayBuffer(fileObject);
+          reader.readAsDataURL(fileObject);
         } else {
           logit("🚫 Invalid file pasted");
           toast({

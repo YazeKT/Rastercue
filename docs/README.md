@@ -1,6 +1,9 @@
 # Documentation
 
 - USER-GUIDE.md — workflow, inspection, naming/history and logs.
+- WORK-PC-TEST.md — Windows installation and original-Upscayl comparison checklist.
+- ENGINE-PROVENANCE.md — exact Windows engine and corresponding source evidence.
+- MODEL-REDISTRIBUTION.md — file-level model rights and permitted release subset.
 - DEVELOPMENT.md — reproducible setup, commands and asset prerequisites.
 - MODELS.md — model evidence and rights boundaries.
 - IMPLEMENTATION-STATUS.md — verified local evidence and known gaps.

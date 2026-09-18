@@ -1,12 +1,11 @@
 {
   "name": "rastercue",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.0-beta.1",
   "productName": "Rastercue",
   "author": {
-    "name": "Nayam Amarshe",
-    "email": "nayam.emikx@aleeas.com",
-    "url": "https://github.com/NayamAmarshe"
+    "name": "Yaze Media / YazeKT",
+    "url": "https://github.com/YazeKT"
   },
   "homepage": "https://github.com/YazeKT/Rastercue",
   "contributors": [
@@ -21,7 +20,6 @@
       "url": "https://github.com/TGS963"
     }
   ],
-  "email": "nayam.emikx@aleeas.com",
   "license": "AGPL-3.0",
   "description": "Rastercue - Designer-focused image upscaling studio, based on Upscayl",
   "keywords": [
@@ -38,12 +36,13 @@
   "scripts": {
     "brand": "node scripts/prepare-brand.cjs",
     "assets:fetch": "node scripts/fetch-upstream-assets.cjs",
+    "release:notices": "node scripts/prepare-release-notices.cjs",
     "test:history": "node scripts/test-rastercue-history.cjs",
-    "test:rastercue": "node --test tests/rastercue.test.cjs tests/jpeg-input.test.cjs tests/spawn-lifecycle.test.cjs",
+    "test:rastercue": "node --test tests/rastercue.test.cjs tests/jpeg-input.test.cjs tests/spawn-lifecycle.test.cjs tests/security-policy.test.cjs",
     "clean": "rimraf dist renderer/.next renderer/out",
     "start": "tsc && electron .",
     "dev": "tsc && electron .",
-    "build": "npm run brand && tsc && npm run validate-schema && next build renderer",
+    "build": "npm run brand && next build renderer && tsc && npm run validate-schema",
     "tsc": "tsc",
     "pack-app": "tsc && npm run build && electron-builder --dir",
     "dist": "tsc && npm run build && cross-env DEBUG=* electron-builder",
@@ -88,14 +87,19 @@
         "from": "resources/${os}/bin",
         "to": "resources/bin",
         "filter": [
-          "**/*"
+          "**/*",
+          "!vcomp140d.dll",
+          "!vcomp140.dll"
         ]
       },
       {
         "from": "resources/models",
         "to": "resources/models",
         "filter": [
-          "**/*"
+          "upscayl-standard-4x.bin",
+          "upscayl-standard-4x.param",
+          "digital-art-4x.bin",
+          "digital-art-4x.param"
         ]
       },
       {
@@ -105,6 +109,15 @@
       {
         "from": "resources/icons/512x512.png",
         "to": "resources/512x512.png"
+      },
+      {
+        "from": ".",
+        "to": "resources/notices",
+        "filter": ["LICENSE", "NOTICE.md", "LEGAL.md", "THIRD-PARTY-NOTICES.md", "Real-ESRGAN_LICENSE.txt", "docs/MODELS.md", "docs/MODEL-REDISTRIBUTION.md", "docs/ENGINE-PROVENANCE.md", "resources/brand/Poppins-OFL.txt"]
+      },
+      {
+        "from": "resources/release-notices",
+        "to": "resources/notices/compiled"
       }
     ],
     "mas": {
@@ -184,7 +197,6 @@
       "icon": "resources/icons/"
     },
     "win": {
-      "publisherName": "YazeKT",
       "target": [
         "nsis",
         "zip"
@@ -199,7 +211,12 @@
     },
     "files": [
       "export",
-      "renderer/out"
+      "renderer/out",
+      "!renderer/out/model-comparison/**/*",
+      "!renderer/out/Upscayl New Page.png",
+      "!renderer/out/logo.svg",
+      "!renderer/out/icon-purple.png",
+      "!renderer/out/icon.png"
     ],
     "publish": {
       "provider": "github",
@@ -213,14 +230,15 @@
     "@types/node": "^18.15.12",
     "@types/react": "^18.0.37",
     "@types/react-dom": "^18.0.11",
-    "ajv": "^6.12.6",
+    "ajv": "6.14.0",
     "autoprefixer": "^10.4.20",
     "cross-env": "^7.0.3",
     "daisyui": "^4.12.23",
-    "electron": "^33.2.1",
-    "electron-builder": "^25.1.8",
-    "next": "^15.2.4",
-    "postcss": "^8.4.49",
+    "electron": "44.4.2",
+    "electron-builder": "26.15.3",
+    "eslint-config-next": "15.5.25",
+    "next": "15.5.25",
+    "postcss": "8.5.28",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.9",
     "react": "^18.3.1",
@@ -229,7 +247,6 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
-    "sharp": "0.33.5",
     "@radix-ui/react-dialog": "^1.1.4",
     "@radix-ui/react-popover": "^1.1.4",
     "@radix-ui/react-scroll-area": "^1.2.2",
@@ -243,9 +260,8 @@
     "electron-log": "^5.2.4",
     "electron-next": "^3.1.5",
     "electron-settings": "^4.0.4",
-    "electron-updater": "^6.3.9",
-    "eslint-config-next": "^14.2.7",
-    "exiftool-vendored": "^29.3.0",
+    "electron-updater": "6.8.9",
+    "exiftool-vendored": "38.1.0",
     "gray-matter": "^4.0.3",
     "jotai": "^2.11.0",
     "lucide-react": "^0.469.0",
@@ -255,12 +271,16 @@
     "react-select": "^5.9.0",
     "react-tooltip": "^5.28.0",
     "remark-gfm": "^4.0.0",
+    "sharp": "0.35.4",
     "tailwind-merge": "^2.6.0",
     "tailwind-scrollbar": "^3.1.0",
     "tailwindcss-animate": "^1.0.7",
     "theme-change": "^2.5.0"
   },
+  "overrides": {
+    "postcss": "$postcss"
+  },
   "volta": {
-    "node": "18.20.5"
+    "node": "22.22.0"
   }
 }

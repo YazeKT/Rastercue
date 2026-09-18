@@ -194,7 +194,7 @@
     },
     "PROGRESS_BAR": {
       "BATCH_UPSCAYL_IN_PROGRESS_TITLE": "Batch Upscayl In Progress:",
-      "IN_PROGRESS_TITLE": "Doing the Upscayl magic...",
+      "IN_PROGRESS_TITLE": "Rastercue is upscaling your image…",
       "STOP_BUTTON_TITLE": "STOP"
     },
     "RESET_BUTTON_TITLE": "Reset",

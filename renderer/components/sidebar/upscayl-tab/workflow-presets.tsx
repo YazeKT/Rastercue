@@ -7,6 +7,7 @@ import {
 } from "@/atoms/rastercue-workflows-atom";
 import { customModelIdsAtom } from "@/atoms/models-list-atom";
 import { MODELS } from "@common/models-list";
+import useModelAvailability from '@/components/hooks/use-model-availability';
 import {
   compressionAtom,
   copyMetadataAtom,
@@ -49,7 +50,8 @@ export default function WorkflowPresets() {
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [open, setOpen] = useState(false);
-  const available = (id: string) => id in MODELS || imported.includes(id);
+  const { builtIn, refresh } = useModelAvailability();
+  const available = (id: string) => id in MODELS ? builtIn?.[id] === true : imported.includes(id);
   const save = () => {
     const cleaned = name.trim();
     if (!cleaned) {
@@ -85,10 +87,11 @@ export default function WorkflowPresets() {
     setName("");
     setMessage("Saved current settings. No job was started.");
   };
-  const apply = (preset: WorkflowPreset) => {
-    if (!available(preset.model)) {
+  const apply = async (preset: WorkflowPreset) => {
+    const actual = preset.model in MODELS ? await refresh() : null;
+    if (preset.model in MODELS ? !actual?.[preset.model] : !available(preset.model)) {
       setMessage(
-        `Model ${preset.model} is missing. Import its folder before applying this preset. No settings changed.`,
+        `Model ${preset.model} is unavailable. Choose an available model or import a creator-authorized custom pair. No settings changed and no substitute was selected.`,
       );
       return;
     }

@@ -1,0 +1,13 @@
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..'),app=path.join(root,'dist/win-unpacked'),resources=path.join(app,'resources');
+const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const baseline=JSON.parse(fs.readFileSync(path.join(root,'tests/engine-baseline.json'))).files;
+assert.equal(hash(path.join(resources,'bin/upscayl-bin.exe')),baseline.find(f=>f.path==='resources/win/bin/upscayl-bin.exe').sha256,'native bytes changed');
+assert.deepEqual(fs.readdirSync(path.join(resources,'bin')).sort(),['upscayl-bin.exe'],'unexpected runtime/debug binaries');
+const models=['digital-art-4x.bin','digital-art-4x.param','upscayl-standard-4x.bin','upscayl-standard-4x.param'];
+assert.deepEqual(fs.readdirSync(path.join(resources,'models')).sort(),models);
+for(const file of models)assert.equal(hash(path.join(resources,'models',file)),baseline.find(f=>f.path==='resources/models/'+file).sha256,file+' changed');
+for(const file of ['LICENSE','NOTICE.md','LEGAL.md','THIRD-PARTY-NOTICES.md','Real-ESRGAN_LICENSE.txt','docs/MODEL-REDISTRIBUTION.md','docs/ENGINE-PROVENANCE.md','resources/brand/Poppins-OFL.txt','compiled/DEPENDENCY-LICENSES.txt','compiled/NATIVE-LICENSES.txt'])assert(fs.statSync(path.join(resources,'notices',file)).size>0,'missing notice '+file);
+for(const file of ['LICENSE.electron.txt','LICENSES.chromium.html','Rastercue.exe'])assert(fs.existsSync(path.join(app,file)),'missing Electron distribution file '+file);
+assert(fs.existsSync(path.join(root,'dist/rastercue-native-corresponding-source.tar.gz')),'missing full native source archive');
+console.log('PASS Windows package inventory, unchanged engine/model bytes, runtime exclusions and notices. This is static evidence, not runtime/platform/signing clearance.');

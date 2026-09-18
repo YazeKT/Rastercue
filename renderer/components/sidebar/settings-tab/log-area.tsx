@@ -5,14 +5,15 @@ import { logTimesAtom } from "@/atoms/log-atom";
 export type LogSeverity="info"|"progress"|"success"|"warning"|"error";
 const severityIcons={info:Info,progress:LoaderCircle,success:CircleCheck,warning:TriangleAlert,error:CircleX};
 export function classifyLog(line:string):LogSeverity {
-  if(/error|failed|failure|invalid|out of memory|permission denied/i.test(line))return "error";
+  if(/error|failed|failure|unsuccessfully|invalid|out of memory|permission denied/i.test(line))return "error";
   if(/warning|unsupported|deprecated|not found/i.test(line))return "warning";
   if(/success|completed|finished|done/i.test(line))return "success";
   if(/\d+(?:\.\d+)?%|processing|upscaling|pass \d|progress/i.test(line))return "progress";
   return "info";
 }
 function explanation(line:string) {
-  if(/out of memory/i.test(line))return "The GPU ran out of memory. Try a smaller tile size.";
+  if(/vkAllocateMemory|out of memory/i.test(line))return "Native memory allocation failed. Try closing memory-heavy applications and explicitly using a smaller tile setting. Driver/resource limits may also be involved; this is not a confirmed diagnosis.";
+  if(/exited unsuccessfully/i.test(line))return "The native job did not finish successfully. No completed output is assumed. Check raw details and retry in a fresh destination.";
   if(/invalid gpu|invalid device/i.test(line))return "The requested GPU is unavailable. Try automatic GPU selection.";
   if(/permission denied|access denied/i.test(line))return "The file or folder is not writable. Choose another destination.";
   if(/\d+(?:\.\d+)?%/.test(line))return "The engine is processing the image.";

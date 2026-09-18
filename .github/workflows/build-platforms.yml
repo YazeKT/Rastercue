@@ -15,13 +15,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-14, ubuntu-22.04]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y rpm libarchive-tools
@@ -29,6 +29,12 @@ jobs:
       - run: npm run assets:fetch -- --acknowledge-model-terms
       - run: npm run build
       - run: npm run test:rastercue
+      - name: Complete corresponding engine source and notices
+        shell: bash
+        run: |
+          git clone --depth 1 --branch 20240601-103425 https://github.com/upscayl/upscayl-ncnn.git "$RUNNER_TEMP/rastercue-native-source"
+          git -C "$RUNNER_TEMP/rastercue-native-source" -c url.https://github.com/.insteadOf=git@github.com: submodule update --init --recursive
+          npm run release:notices -- "$RUNNER_TEMP/rastercue-native-source"
       - run: npx electron-builder --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'

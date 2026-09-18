@@ -15,6 +15,8 @@ export interface IElectronAPI {
     gpu: Record<string, any>;
   }>;
   getAppVersion: () => Promise<string>;
+  getFilePath: (file: File) => string;
+  getBuiltInModels: () => Promise<Record<string, boolean>>;
 }
 
 declare global {

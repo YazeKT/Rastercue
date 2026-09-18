@@ -117,7 +117,7 @@ export function registerRastercueHistory(win: BrowserWindow): void {
   }
 
   function begin(event: Electron.IpcMainEvent, payload: any, kind: RastercueJob["kind"]) {
-    if (event.sender.id !== win.webContents.id || !payload || typeof payload.outputPath !== "string") return;
+    if (event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame || !payload || typeof payload.outputPath !== "string") return;
     if (active?.status === "running") { active.status = "interrupted"; active.warnings.push("A new engine submission replaced the active history observation."); }
     let source: string, destination: string;
     try { source = decode(kind === "batch" ? payload.batchFolderPath : payload.imagePath); destination = decode(payload.outputPath); } catch { return; }
@@ -179,7 +179,7 @@ export function registerRastercueHistory(win: BrowserWindow): void {
   ipcMain.prependListener(C.DOUBLE_UPSCAYL, (e, p) => begin(e, p, "double"));
   ipcMain.prependListener(C.FOLDER_UPSCAYL, (e, p) => begin(e, p, "batch"));
   ipcMain.prependListener(C.STOP, e => {
-    if (e.sender.id !== win.webContents.id || !active || finishing) return;
+    if (e.sender !== win.webContents || e.senderFrame !== win.webContents.mainFrame || !active || finishing) return;
     active.status = "cancelled"; active.progress = "Cancelled"; active.endedAt = new Date().toISOString(); active.durationMs = Date.now() - Date.parse(active.startedAt); active = null; void persist(); notify();
   });
 
