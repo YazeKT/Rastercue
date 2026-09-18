@@ -1,5 +1,11 @@
 # Local implementation evidence
 
+## Beta 2 — work-PC feedback
+
+Owner reports beta 1 works well on the work PC but Stop appeared frozen and settings pagination was inconvenient. Beta 2 adds cancellation busy-state reset/late-progress suppression, asynchronous Sharp history metadata/thumbnails, bounded/unmounted logs and coalesced history/taskbar/visual progress. Original engine binaries/handlers/arguments/model IDs/defaults and raw diagnostics remain intact.
+
+Settings is one full popup with Support/GitHub/update/documentation and a five-step first-use/replay guide. Four built-ins and nine custom pairs are installer-bundled after creator provenance verification; eight unresolved pairs remain excluded. 22 regression tests and history safety/progress-flood tests pass. Packaged simulated-engine cancellation passed Stop click, busy reset, preserved files, restart and main-process shortcut handler. Simulation is not a native GPU performance claim. Final packaged settings/inventory/hosted release checks are separate. Further major-update development remains local until explicit owner approval.
+
 ## Windows beta release pass — 18 September 2026
 
 Release scope: an unsigned Windows work-PC testing beta, authorised by the owner. The intended machine is an i5-8600K / RX 580 / 32 GB RAM desktop, not this resource-constrained integrated-GPU laptop. A later expanded laptop run still encountered Vulkan memory allocation failure; the earlier four-path pass is not a guarantee of reliability on every machine. A fresh actual butterfly image completed with Digital Art and was visually inspected as colour without stripes. Work-PC real-world testing remains pending. The temporary product-wide software-rendering workaround has been removed: original interface acceleration and engine defaults are retained. Prior software-rendering results below describe the test environment, not the release default.

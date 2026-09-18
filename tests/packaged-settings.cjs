@@ -1,0 +1,54 @@
+const { _electron } = require(process.env.RASTERCUE_PLAYWRIGHT_PATH || 'playwright');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+(async () => {
+  const root = path.resolve(__dirname, '..');
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'rastercue-settings-'));
+  const app = await _electron.launch({ executablePath: process.env.RASTERCUE_TEST_EXE || path.join(root, 'dist/win-unpacked/Rastercue.exe'), env: { ...process.env, RASTERCUE_TEST_USER_DATA: profile }, timeout: 90000 });
+  try {
+    const page = await app.firstWindow();
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1366, 728));
+    await page.getByRole('heading', { name: 'Welcome to Rastercue', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    assert.equal(await page.evaluate(() => localStorage.getItem('rastercueGettingStarted.v1')), null, 'Next must not complete the tour');
+    await page.reload();
+    await page.getByRole('heading', { name: 'Welcome to Rastercue', exact: true }).waitFor();
+    for (let index = 0; index < 4; index++) await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await page.getByRole('button', { name: 'Open workspace', exact: true }).click();
+    assert.equal(await page.evaluate(() => localStorage.getItem('rastercueGettingStarted.v1')), 'completed');
+    await page.reload();
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    const settings = page.getByRole('dialog', { name: 'Settings & support', exact: true });
+    await settings.waitFor();
+    for (const name of ['Output', 'Processing', 'Application']) assert.equal(await settings.getByRole('heading', { name, exact: true }).count(), 1);
+    assert.equal(await settings.getByRole('button', { name: 'Next', exact: true }).count(), 0);
+    assert.equal(await settings.getByRole('button', { name: 'Previous', exact: true }).count(), 0);
+    assert.equal(await page.getByRole('button', { name: 'Start upscale', exact: true, includeHidden: true }).count(), 1, 'Permanent workflow remains mounted (modal hides it from the accessibility tree)');
+    const box = await settings.boundingBox();
+    assert.ok(box && box.y >= 0 && box.y + box.height <= await page.evaluate(() => innerHeight), 'Settings fit the usable viewport');
+    const selectedModel = await page.evaluate(() => localStorage.getItem('selectedModelId'));
+    await settings.getByRole('button', { name: 'Use bundled model library', exact: true }).click();
+    await settings.getByText('Bundled model library selected. Your selected model was not changed.', { exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => localStorage.getItem('customModelsPath')), '""');
+    assert.equal(await page.evaluate(() => localStorage.getItem('selectedModelId')), selectedModel, 'Library restore must not substitute the selected model');
+    await settings.getByRole('button', { name: 'Support', exact: true }).click();
+    assert.equal(await settings.getByRole('link', { name: 'Yaze Media profile', exact: true }).getAttribute('href'), 'https://github.com/YazeKT');
+    assert.equal(await settings.getByRole('link', { name: 'Releases & downloads', exact: true }).getAttribute('href'), 'https://github.com/YazeKT/Rastercue/releases');
+    await settings.getByRole('button', { name: /Open readable logs/ }).click();
+    await page.getByRole('button', { name: 'Close logs', exact: true }).click();
+    assert.equal(await page.locator('.rastercue-log-dialog').count(), 0, 'Closed logs are unmounted');
+    fs.mkdirSync(path.join(root, 'tests/artifacts'), { recursive: true });
+    await page.screenshot({ path: path.join(root, 'tests/artifacts/rastercue-support.png') });
+    await settings.getByRole('button', { name: 'Replay the short getting-started guide', exact: true }).click();
+    await page.getByRole('heading', { name: 'Welcome to Rastercue', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Skip guide', exact: true }).click();
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await settings.getByRole('button', { name: 'All settings', exact: true }).click();
+    await page.screenshot({ path: path.join(root, 'tests/artifacts/rastercue-settings.png') });
+    await settings.getByRole('button', { name: 'Back to workspace', exact: true }).click();
+    console.log('PASS: first-use tour persistence/replay, all-settings dialog, viewport bounds, support links and log close');
+  } finally { await app.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

@@ -9,7 +9,7 @@ const os = require('node:os');
   try {
     const page = await app.firstWindow();
     await page.waitForFunction(() => !!window.rastercue);
-    await page.evaluate(() => localStorage.setItem('rastercueWelcomeSeen','true'));
+    await page.evaluate(() => { localStorage.setItem('rastercueWelcomeSeen','true'); localStorage.setItem('rastercueGettingStarted.v1','completed'); });
     await page.reload();
     await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows()[0].setSize(1366,728));
     await page.waitForTimeout(1500);

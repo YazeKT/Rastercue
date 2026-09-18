@@ -1,5 +1,14 @@
 # Rastercue changelog
 
+## 1.0.0-beta.2 — Work-PC feedback update
+
+- Stop clears the busy interface and suppresses late progress, without deleting already-written outputs. Ctrl+. / Cmd+. offers a main-process cancellation shortcut.
+- History headers/thumbnails run asynchronously rather than decoding full images on the main thread. History/taskbar/visual percentages are coalesced. Raw diagnostics remain in log files; visible logs retain 1,000 entries and closed log dialogs are unmounted.
+- Full Settings popup lists Output, Processing and Application together without arrow pagination. Support contains licensing/documents, GitHub links, log-folder access, update controls and guide replay.
+- Five-step guide appears once; completion, skipping and dismissal are remembered.
+- Installer includes four verified built-ins and nine verified custom models, automatically loaded, with complete BSD/CC notices, conversion evidence and pinned checksum staging. Eight unresolved pairs remain excluded; credit alone is not permission.
+- Original engine binaries, protected handlers/arguments, model IDs and processing defaults remain unchanged. Windows is still an unsigned testing beta.
+
 ## 1.0.0-beta.1 — Windows release preparation
 
 Isolated dependency/security pass: updated affected Electron/runtime/build/image/metadata dependencies; full and production npm audits report zero known advisories at the release audit. Renderer Node disabled, isolation/web security enabled; restricted IPC, navigation, permissions and external URLs. Clipboard/drop modernized for isolated Electron.

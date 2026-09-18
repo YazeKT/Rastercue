@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { ELECTRON_COMMANDS } from "@common/electron-commands";
 import { useAtomValue } from "jotai";
 import { translationAtom } from "@/atoms/translations-atom";
+import { progressAtom } from "@/atoms/user-settings-atom";
 
 type CustomModelsFolderSelectProps = {
   customModelsPath: string;
@@ -13,6 +14,9 @@ export function CustomModelsFolderSelect({
   setCustomModelsPath,
 }: CustomModelsFolderSelectProps) {
   const t = useAtomValue(translationAtom);
+  const progress = useAtomValue(progressAtom);
+  const [restoring, setRestoring] = useState(false);
+  const [status, setStatus] = useState('');
 
   return (
     <div className="flex flex-col items-start gap-2">
@@ -27,9 +31,10 @@ export function CustomModelsFolderSelect({
           {t("SETTINGS.CUSTOM_MODELS.LINK_TITLE")}
         </a>
       </p>
-      <p className="text-sm text-base-content/60">{customModelsPath}</p>
+      <p className="break-all text-sm text-base-content/60">{customModelsPath || 'Using the bundled model library'}</p>
       <button
         className="btn btn-primary"
+        disabled={!!progress || restoring}
         onClick={async () => {
           const customModelPath = await window.electron.invoke(
             ELECTRON_COMMANDS.SELECT_CUSTOM_MODEL_FOLDER,
@@ -48,6 +53,18 @@ export function CustomModelsFolderSelect({
       >
         {t("SETTINGS.CUSTOM_MODELS.BUTTON_FOLDER")}
       </button>
+      <button className="btn btn-sm" disabled={!!progress || restoring} onClick={async()=>{
+        setRestoring(true);setStatus('');
+        try {
+          const folder = await window.electron.invoke('rastercue-models:bundled-folder');
+          if(typeof folder!=='string'||!folder)throw new Error('Bundled model folder unavailable');
+          setCustomModelsPath('');
+          window.electron.send(ELECTRON_COMMANDS.GET_MODELS_LIST,folder);
+          setStatus('Bundled model library selected. Your selected model was not changed.');
+        } catch { setStatus('Could not load the bundled library. Retry or select a custom folder.'); }
+        finally { setRestoring(false); }
+      }}>{restoring?'Loading library…':'Use bundled model library'}</button>
+      <p className="text-xs" role="status">{status}</p>
     </div>
   );
 }

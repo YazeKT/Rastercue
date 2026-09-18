@@ -16,6 +16,7 @@ export interface RastercueAPI {
   rename(jobId: string, fileId: string, name: string): Promise<HistorySnapshot>;
   open(jobId: string, fileId: string): Promise<void>;
   openFolder(jobId?: string): Promise<void>;
+  openLogs(): Promise<void>;
   relocate(): Promise<HistorySnapshot>;
   clear(confirmed: boolean): Promise<HistorySnapshot>;
   onChanged(callback: (snapshot: HistorySnapshot) => void): () => void;

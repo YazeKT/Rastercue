@@ -1,7 +1,7 @@
 {
   "name": "rastercue",
   "private": true,
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "productName": "Rastercue",
   "author": {
     "name": "Yaze Media / YazeKT",
@@ -37,6 +37,7 @@
     "brand": "node scripts/prepare-brand.cjs",
     "assets:fetch": "node scripts/fetch-upstream-assets.cjs",
     "release:notices": "node scripts/prepare-release-notices.cjs",
+    "release:models": "node scripts/prepare-bundled-models.cjs",
     "test:history": "node scripts/test-rastercue-history.cjs",
     "test:rastercue": "node --test tests/rastercue.test.cjs tests/jpeg-input.test.cjs tests/spawn-lifecycle.test.cjs tests/security-policy.test.cjs",
     "clean": "rimraf dist renderer/.next renderer/out",
@@ -98,9 +99,22 @@
         "filter": [
           "upscayl-standard-4x.bin",
           "upscayl-standard-4x.param",
+          "upscayl-lite-4x.bin",
+          "upscayl-lite-4x.param",
+          "high-fidelity-4x.bin",
+          "high-fidelity-4x.param",
           "digital-art-4x.bin",
           "digital-art-4x.param"
         ]
+      },
+      {
+        "from": "resources/release-models",
+        "to": "resources/models",
+        "filter": ["*.bin", "*.param"]
+      },
+      {
+        "from": "resources/release-models/CC-BY-4.0.txt",
+        "to": "resources/notices/CC-BY-4.0.txt"
       },
       {
         "from": "resources/icons/128x128.png",
@@ -113,7 +127,17 @@
       {
         "from": ".",
         "to": "resources/notices",
-        "filter": ["LICENSE", "NOTICE.md", "LEGAL.md", "THIRD-PARTY-NOTICES.md", "Real-ESRGAN_LICENSE.txt", "docs/MODELS.md", "docs/MODEL-REDISTRIBUTION.md", "docs/ENGINE-PROVENANCE.md", "resources/brand/Poppins-OFL.txt"]
+        "filter": [
+          "LICENSE",
+          "NOTICE.md",
+          "LEGAL.md",
+          "THIRD-PARTY-NOTICES.md",
+          "Real-ESRGAN_LICENSE.txt",
+          "docs/MODELS.md",
+          "docs/MODEL-REDISTRIBUTION.md",
+          "docs/ENGINE-PROVENANCE.md",
+          "resources/brand/Poppins-OFL.txt"
+        ]
       },
       {
         "from": "resources/release-notices",

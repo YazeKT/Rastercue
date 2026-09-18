@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { getPlatform } from "./utils/get-device-specs";
 import { join } from "path";
 import { ELECTRON_COMMANDS } from "../common/electron-commands";
@@ -58,7 +58,34 @@ const createMainWindow = () => {
   mainWindow.webContents.on('will-attach-webview', event => event.preventDefault());
   mainWindow.webContents.session.setPermissionRequestHandler((contents, permission, callback) => callback(contents === mainWindow?.webContents && permission === 'clipboard-sanitized-write'));
   mainWindow.webContents.session.setPermissionCheckHandler((contents, permission) => contents === mainWindow?.webContents && permission === 'clipboard-sanitized-write');
+  // The taskbar is presentation only. Avoid thousands of synchronous native
+  // shell updates for tiny engine tiles; reset/error/cancellation stays immediate.
+  const updateTaskbar = mainWindow.setProgressBar.bind(mainWindow);
+  let taskbarTimer: ReturnType<typeof setTimeout> | undefined;
+  let taskbarValue = 0;
+  let taskbarOptions: Parameters<BrowserWindow['setProgressBar']>[1];
+  mainWindow.setProgressBar = (value, options) => {
+    if (!Number.isFinite(value)) return;
+    if (value < 0 || value >= 1) {
+      if (taskbarTimer) clearTimeout(taskbarTimer);
+      taskbarTimer = undefined; updateTaskbar(value, options); return;
+    }
+    taskbarValue = value; taskbarOptions = options;
+    if (!taskbarTimer) taskbarTimer = setTimeout(() => {
+      taskbarTimer = undefined;
+      if (mainWindow && !mainWindow.isDestroyed()) updateTaskbar(taskbarValue, taskbarOptions);
+    }, 150);
+  };
+  mainWindow.once('closed', () => { if (taskbarTimer) clearTimeout(taskbarTimer); });
   mainWindow.loadURL(url);
+  // A main-process shortcut remains available even if renderer JavaScript is
+  // busy. Dispatch the same trusted Stop command; never delete output files.
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown' && (input.control || input.meta) && input.key === '.') {
+      event.preventDefault();
+      if (mainWindow) ipcMain.emit(ELECTRON_COMMANDS.STOP, { sender: mainWindow.webContents, senderFrame: mainWindow.webContents.mainFrame });
+    }
+  });
 
   mainWindow.once("ready-to-show", () => {
     if (!mainWindow) return;

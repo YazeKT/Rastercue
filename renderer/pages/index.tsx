@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ELECTRON_COMMANDS } from "@common/electron-commands";
 import { useAtomValue, useSetAtom } from "jotai";
 import { customModelIdsAtom } from "../atoms/models-list-atom";
@@ -23,6 +23,7 @@ import { ImageFormat, VALID_IMAGE_FORMATS } from "@/lib/valid-formats";
 import { initCustomModels } from "@/components/hooks/use-custom-models";
 import { OnboardingDialog } from "@/components/main-content/onboarding-dialog";
 import useSystemInfo from "@/components/hooks/use-system-info";
+import { MODELS } from '@common/models-list';
 
 const Home = () => {
   const t = useAtomValue(translationAtom);
@@ -35,10 +36,13 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [imagePath, setImagePath] = useState("");
   const [upscaledImagePath, setUpscaledImagePath] = useState("");
+  const acceptingProgress = useRef(true);
   useEffect(() => {
     if (!window.rastercue) return;
     return window.rastercue.onChanged(snapshot => {
       const job = snapshot.current;
+      acceptingProgress.current = job?.status === 'running';
+      if (job && ['cancelled', 'failed', 'interrupted'].includes(job.status)) setProgress('');
       if (job?.status === 'completed' && job.kind !== 'batch') {
         const file = job.files[0];
         if (file?.source.path && file.output?.path) {
@@ -213,6 +217,7 @@ const Home = () => {
     window.electron.on(
       ELECTRON_COMMANDS.UPSCAYL_PROGRESS,
       (_, data: string) => {
+        if (!acceptingProgress.current) return;
         if (data.length > 0 && data.length < 10) {
           setProgress(data);
         } else if (data.includes("converting")) {
@@ -221,13 +226,13 @@ const Home = () => {
           setProgress(t("APP.PROGRESS.SUCCESS_TITLE"));
         }
         handleErrors(data);
-        logit(`🚧 UPSCAYL_PROGRESS: `, data);
       },
     );
     // FOLDER UPSCAYL PROGRESS
     window.electron.on(
       ELECTRON_COMMANDS.FOLDER_UPSCAYL_PROGRESS,
       (_, data: string) => {
+        if (!acceptingProgress.current) return;
         if (data.includes("Successful")) {
           setProgress(t("APP.PROGRESS.SUCCESS_TITLE"));
         }
@@ -235,13 +240,13 @@ const Home = () => {
           setProgress(data);
         }
         handleErrors(data);
-        logit(`🚧 FOLDER_UPSCAYL_PROGRESS: `, data);
       },
     );
     // DOUBLE UPSCAYL PROGRESS
     window.electron.on(
       ELECTRON_COMMANDS.DOUBLE_UPSCAYL_PROGRESS,
       (_, data: string) => {
+        if (!acceptingProgress.current) return;
         if (data.length > 0 && data.length < 10) {
           if (data === "0.00%") {
             setDoubleUpscaylCounter(doubleUpscaylCounter + 1);
@@ -249,7 +254,6 @@ const Home = () => {
           setProgress(data);
         }
         handleErrors(data);
-        logit(`🚧 DOUBLE_UPSCAYL_PROGRESS: `, data);
       },
     );
     // UPSCAYL DONE
@@ -308,7 +312,7 @@ const Home = () => {
       (_, data: string[]) => {
         logit(`📜 CUSTOM_MODEL_FILES_LIST: `, data);
         console.log("🚀 => data:", data);
-        setModelIds(data);
+        setModelIds(data.filter(id => !(id in MODELS)));
       },
     );
   }, []);

@@ -6,12 +6,17 @@ export const initCustomModels = () => {
   const logit = useLogger();
 
   useEffect(() => {
-    const customModelsPath = JSON.parse(
-      localStorage.getItem("customModelsPath"),
-    );
-    if (customModelsPath !== null) {
-      window.electron.send(ELECTRON_COMMANDS.GET_MODELS_LIST, customModelsPath);
-      logit("🎯 GET_MODELS_LIST: ", customModelsPath);
-    }
+    let disposed = false;
+    void (async () => {
+      try {
+        const customModelsPath = JSON.parse(localStorage.getItem("customModelsPath"));
+        const folder = customModelsPath || await window.electron.invoke('rastercue-models:bundled-folder');
+        if (!disposed && folder) {
+          window.electron.send(ELECTRON_COMMANDS.GET_MODELS_LIST, folder);
+          logit('Models folder:', folder);
+        }
+      } catch { logit('Warning: could not load model folder. Reopen Settings and select your model folder.'); }
+    })();
+    return () => { disposed = true; };
   }, []);
 };

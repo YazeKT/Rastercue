@@ -1,0 +1,77 @@
+{
+  "revision": "4b6d2cfa59c7442af115dfc6e50fd8d7d40b96ef",
+  "files": [
+    {
+      "name": "4xHFA2k.bin",
+      "sha256": "8a135402b4f39286121b76abb47601a6b7b7e8d4f3e999a5aaa45ed277824fb4"
+    },
+    {
+      "name": "4xHFA2k.param",
+      "sha256": "4576ed5c2fc5fa250d3c3d585ef02248f26abdfc1867088078f501fe71e5d61e"
+    },
+    {
+      "name": "4xLSDIR.bin",
+      "sha256": "0622f182f0a940b395e4fc70e2707b285e016fa4b014e855205eb40efddfb853"
+    },
+    {
+      "name": "4xLSDIR.param",
+      "sha256": "4576ed5c2fc5fa250d3c3d585ef02248f26abdfc1867088078f501fe71e5d61e"
+    },
+    {
+      "name": "4xLSDIRCompactC3.bin",
+      "sha256": "692aa5e70c86522ce2d72b94f372751339a2fee65f515d06da5d496d8cf93667"
+    },
+    {
+      "name": "4xLSDIRCompactC3.param",
+      "sha256": "6e3795fb5b6c68b2c39822e78bf83b575c918f96e9db6c36934a79e7d491d5e1"
+    },
+    {
+      "name": "4xNomos8kSC.bin",
+      "sha256": "da16e3880d87b177b7c6b659bbd880f8a101b868eb9ebc08d69eaa6d3edc4517"
+    },
+    {
+      "name": "4xNomos8kSC.param",
+      "sha256": "4576ed5c2fc5fa250d3c3d585ef02248f26abdfc1867088078f501fe71e5d61e"
+    },
+    {
+      "name": "realesr-animevideov3-x2.bin",
+      "sha256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d"
+    },
+    {
+      "name": "realesr-animevideov3-x2.param",
+      "sha256": "b88ff4f00ebf019a7fdac17fdd45a7fd3665d37509efc5baf2e4da2e24420a04"
+    },
+    {
+      "name": "realesr-animevideov3-x3.bin",
+      "sha256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d"
+    },
+    {
+      "name": "realesr-animevideov3-x3.param",
+      "sha256": "d1a5755008791d09b57e3425fc9dd0bd26b00fdf79c606210bc0e693f8230881"
+    },
+    {
+      "name": "realesr-animevideov3-x4.bin",
+      "sha256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d"
+    },
+    {
+      "name": "realesr-animevideov3-x4.param",
+      "sha256": "850a248e7c14c27e5bd8cf7265113a9441036a7db63963bb8aa5169d788a435e"
+    },
+    {
+      "name": "RealESRGAN_General_x4_v3.bin",
+      "sha256": "85ee266b632a765a725425ba6a5620c088c8aa2939a03063b2d83b3462724cc1"
+    },
+    {
+      "name": "RealESRGAN_General_x4_v3.param",
+      "sha256": "22174924330297357434ad21ed0af7f4b820008d2a502b492754d130d4142714"
+    },
+    {
+      "name": "RealESRGAN_General_WDN_x4_v3.bin",
+      "sha256": "74eae91a6230cbe5b931be6c49141faaff0034976933d4da9accb77c329c8a78"
+    },
+    {
+      "name": "RealESRGAN_General_WDN_x4_v3.param",
+      "sha256": "22174924330297357434ad21ed0af7f4b820008d2a502b492754d130d4142714"
+    }
+  ]
+}

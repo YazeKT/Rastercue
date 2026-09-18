@@ -2,7 +2,11 @@
 
 Windows beta: extract the full ZIP or run the NSIS installer. Binaries are unsigned. Install the Microsoft Visual C++ x64 Redistributable directly from https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist if required; no Microsoft DLLs are bundled. Use current Vulkan-capable GPU drivers. Original interface hardware acceleration and native processing defaults are retained. Your RX 580 work PC is the intended real-world acceptance machine; it has not yet been tested.
 
-Standard/Digital Art are bundled with verified creator notices. The optional credited custom pack supplies Anime Video x2/x3/x4 and Nomos8kSC; extract and import its models folder. Other builtin models remain catalogue guidance, visibly not bundled. If you hold appropriate creator-authorized weights, import under a distinct custom filename rather than a reserved missing builtin ID. No automatic replacement occurs.
+Beta 2 automatically includes Standard, Digital Art, Lite, High Fidelity and nine custom pairs: Anime Video x2/x3/x4, Nomos8kSC, HFA2k, LSDIR, LSDIRCompactC3, General v3 and General WDN v3. Application settings can restore the bundled model folder after a user custom import without changing the selected model. Eight unresolved pairs remain excluded; credit alone is not permission. See MODEL-REDISTRIBUTION.md for creator links, complete attribution and modifications.
+
+Settings opens one full popup listing Output, Processing and Application together. Support contains licences/documents, GitHub links, manual/automatic updates, log-folder access and guide replay. The five-step first-use guide remembers completion, skipping and dismissal.
+
+Stop/Cancel clears the busy interface. Ctrl+. (Cmd+. on macOS) also dispatches Stop from the main process. Already-written files are kept; partial files are not verified completed outputs. Visible logs retain 1,000 entries; raw native diagnostics remain in application log files. Async history reads and reduced visual progress refreshes do not change exported pixels.
 
 If logs report vkAllocateMemory or an unsuccessful native exit, the job is failed, not a completed output. Close memory-heavy applications, check GPU drivers and explicitly try a smaller existing tile setting (such as 32) before retrying in a fresh destination. These are troubleshooting suggestions, not a confirmed diagnosis or guarantee; do not overwrite originals. The current test host showed failures with low available committed memory.
 

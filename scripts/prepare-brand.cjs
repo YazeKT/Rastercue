@@ -23,6 +23,8 @@ const root = path.resolve(__dirname, '..');
   }
   fs.copyFileSync(path.join(root,'LICENSE'),path.join(root,'renderer/public/LICENSE.txt'));
   fs.copyFileSync(path.join(root,'Real-ESRGAN_LICENSE.txt'),path.join(root,'renderer/public/Real-ESRGAN_LICENSE.txt'));
+  fs.copyFileSync(path.join(root,'docs/MODEL-REDISTRIBUTION.md'),path.join(root,'renderer/public/MODEL-REDISTRIBUTION.md'));
+  if(fs.existsSync(path.join(root,'resources/release-models/CC-BY-4.0.txt')))fs.copyFileSync(path.join(root,'resources/release-models/CC-BY-4.0.txt'),path.join(root,'renderer/public/CC-BY-4.0.txt'));
   const fontNotice=path.join(root,'resources/brand/Poppins-OFL.txt');
   if(fs.existsSync(fontNotice)) fs.copyFileSync(fontNotice,path.join(root,'renderer/public/Poppins-OFL.txt'));
   const sizes=[16,20,24,32,40,48,64,128,256];

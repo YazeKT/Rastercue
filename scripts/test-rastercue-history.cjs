@@ -12,7 +12,7 @@ const ipcMain = new EventEmitter();
 ipcMain.handle = (channel, handler) => handlers.set(channel, handler);
 const sent = [];
 const frame = {};
-const win = { isDestroyed: () => false, webContents: { id: 42, mainFrame: frame, send: (...args) => sent.push(args) } };
+const win = { once: () => {}, isDestroyed: () => false, webContents: { id: 42, mainFrame: frame, send: (...args) => sent.push(args) } };
 const event = { sender: win.webContents, senderFrame: frame };
 const electron = {
   app: { getPath: () => root }, ipcMain,
@@ -27,7 +27,8 @@ const commandModule = { exports: {} };
 vm.runInThisContext(`(function(require,module,exports){${ts.transpileModule(commandsSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText}\n})`)(require, commandModule, commandModule.exports);
 const C = commandModule.exports.ELECTRON_COMMANDS;
 const mod = { exports: {} };
-vm.runInThisContext(`(function(require,module,exports){${js}\n})`)(id => id === 'electron' ? electron : id === '../common/electron-commands' ? commandModule.exports : require(id), mod, mod.exports);
+const imageReader = () => ({ metadata: async () => ({ width: 10, height: 20 }), resize() { return this; }, png() { return this; }, toFile: async target => fs.promises.writeFile(target, 'thumbnail') });
+vm.runInThisContext(`(function(require,module,exports){${js}\n})`)(id => id === 'electron' ? electron : id === 'sharp' ? imageReader : id === '../common/electron-commands' ? commandModule.exports : require(id), mod, mod.exports);
 const api = (name, ...args) => handlers.get(`rastercue:${name}`)(event, ...args);
 const sleep = () => new Promise(resolve => setTimeout(resolve, 20));
 async function settled() {
@@ -73,7 +74,12 @@ async function settled() {
   ipcMain.emit(C.DOUBLE_UPSCAYL, event, payload);
   win.webContents.send(C.UPSCAYL_ERROR, 'engine failure');
   state = await settled(); assert.equal(state.records[0].status, 'failed');
-  ipcMain.emit(C.UPSCAYL, event, payload); ipcMain.emit(C.STOP, event);
+  ipcMain.emit(C.UPSCAYL, event, payload);
+  const beforeFlood = sent.filter(item => item[0] === 'rastercue:changed').length;
+  for (let i = 0; i < 10000; i++) win.webContents.send(C.UPSCAYL_PROGRESS, `${i % 100}%`);
+  assert.equal(sent.filter(item => item[0] === 'rastercue:changed').length, beforeFlood, 'History progress does not serialize snapshots per native tile');
+  ipcMain.emit(C.STOP, event);
+  assert.equal((await api('current')).status, 'cancelled', 'Stop is immediate after a progress flood');
   state = await settled(); assert.equal(state.records[0].status, 'cancelled');
   const batchInput = path.join(root, 'batch-input'); const batchOutput = path.join(root, 'upscayl_jpg_test_4x');
   fs.mkdirSync(batchInput); fs.mkdirSync(batchOutput);
@@ -98,7 +104,7 @@ async function settled() {
   fs.writeFileSync(path.join(state.folder, 'history.backup.json'), JSON.stringify(recovered));
   fs.writeFileSync(path.join(state.folder, 'history.json'), '{broken json');
   const reloadedModule = { exports: {} };
-  vm.runInThisContext(`(function(require,module,exports){${js}\n})`)(id => id === 'electron' ? electron : id === '../common/electron-commands' ? commandModule.exports : require(id), reloadedModule, reloadedModule.exports);
+  vm.runInThisContext(`(function(require,module,exports){${js}\n})`)(id => id === 'electron' ? electron : id === 'sharp' ? imageReader : id === '../common/electron-commands' ? commandModule.exports : require(id), reloadedModule, reloadedModule.exports);
   reloadedModule.exports.registerRastercueHistory(win);
   state = await api('list');
   assert.equal(state.records[0].status, 'interrupted', 'A recovered in-progress job must not be inferred successful');

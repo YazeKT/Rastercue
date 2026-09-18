@@ -28,6 +28,7 @@ import { builtInModelAvailability } from './utils/model-availability';
 // INITIALIZATION
 app.setName('Rastercue');
 app.setPath('userData', process.env.RASTERCUE_TEST_USER_DATA || path.join(app.getPath('appData'), 'Rastercue'));
+log.transports.file.sync = false;
 log.initialize({ preload: true });
 
 app.on("ready", async () => {
@@ -120,6 +121,7 @@ const handleTrusted = (channel: string, handler: (...args: any[]) => any) => ipc
 });
 
 onTrusted(ELECTRON_COMMANDS.STOP, stop);
+handleTrusted('rastercue-models:bundled-folder', () => modelsPath);
 
 onTrusted(ELECTRON_COMMANDS.OPEN_FOLDER, openFolder);
 

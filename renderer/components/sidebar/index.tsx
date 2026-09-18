@@ -68,7 +68,7 @@ const Sidebar = ({
   const [gpuId, setGpuId] = useAtom(gpuIdAtom);
   const [saveImageAs, setSaveImageAs] = useAtom(saveImageAsAtom);
 
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [showCloudModal, setShowCloudModal] = useState(false);
 
   // ATOMIC STATES
@@ -217,10 +217,11 @@ const Sidebar = ({
 
         <header className="rastercue-brand"><RastercueLogo className="h-8 w-8"/><div><h1>Rastercue</h1><p>Image upscaling workspace</p></div></header>
         <div className="compact-tabs" role="group" aria-label="Workspace">
-          {["Upscale", "Settings"].map((label,i)=><button key={label} aria-pressed={selectedTab===i} className={selectedTab===i?"active":""} onClick={()=>setSelectedTab(i)}>{label}</button>)}
+          <button className="active" onClick={()=>setSettingsOpen(false)}>Upscale</button>
+          <button aria-haspopup="dialog" aria-expanded={settingsOpen} onClick={()=>setSettingsOpen(true)}>Settings</button>
         </div>
 
-        {selectedTab === 0 && (
+        {(
           <UpscaylSteps
             selectImageHandler={selectImageHandler}
             selectFolderHandler={selectFolderHandler}
@@ -236,8 +237,10 @@ const Sidebar = ({
           />
         )}
 
-        {selectedTab === 1 && (
+        {(
           <SettingsTab
+            open={settingsOpen}
+            onOpenChange={setSettingsOpen}
             batchMode={batchMode}
             compression={compression}
             setCompression={setCompression}

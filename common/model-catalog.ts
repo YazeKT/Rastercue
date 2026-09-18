@@ -63,6 +63,10 @@ export const MODEL_CATALOG: ModelGuide[] = [
     "General images; upstream describes high-speed upscaling with minimal quality loss.",
     "Try a general photo when turnaround matters; compare against Standard.",
     {
+      creator: "Xintao Wang / Real-ESRGAN",
+      rights: "BSD-3-Clause. Complete local tensor data verified as FP16 adaptation of creator General x4v3; retain complete creator licence notice.",
+      evidence: "All 101 tensor arrays verified against original creator General x4v3 release, including rounded biases and PReLU arrays.",
+      sources: [upstream, "https://github.com/xinntao/Real-ESRGAN/releases/tag/v0.2.5.0"],
       performance: "Upstream describes this as a faster option. " + performance,
     },
   ),
@@ -71,6 +75,12 @@ export const MODEL_CATALOG: ModelGuide[] = [
     "High Fidelity",
     "Upstream describes realistic details and smooth textures across image types.",
     "Compare skin and fabric textures against Standard.",
+    {
+      creator: "Phhofm (creator files); Helaman (additional upstream credit)",
+      rights: "CC BY 4.0. Verified HFA2k FP16 adaptation; credit creator, link licence and describe conversion when sharing.",
+      evidence: "All 16,684,416 learned weights and unchanged FP32 biases verified against creator HFA2k FP32 NCNN; input names/formatting adapted.",
+      sources: [upstream, phhofm + "4xHFA2k"],
+    },
   ),
   guide(
     "remacri-4x",
@@ -78,8 +88,10 @@ export const MODEL_CATALOG: ModelGuide[] = [
     "Natural images with added sharpness and detail, according to upstream.",
     "Inspect a natural-photo crop for unwanted sharpening.",
     {
+      creator: "Foolhardy (upstream attribution)",
       rights:
-        "NON-COMMERCIAL — retained upstream notice. Do not use for paid work; underlying weight terms still require verification.",
+        "NON-COMMERCIAL — CC BY-NC-SA 4.0 stated by creator Kim2091 in upstream licence issue. Attribution, modification disclosure and ShareAlike required; exact local conversion remains unverified. Do not use for paid work.",
+      sources: [upstream, "https://github.com/upscayl/upscayl/issues/198"],
     },
   ),
   guide(
@@ -88,8 +100,10 @@ export const MODEL_CATALOG: ModelGuide[] = [
     "Natural images with balanced sharpness and detail, according to upstream.",
     "Compare a landscape’s fine foliage and smooth sky.",
     {
+      creator: "Kim2091",
       rights:
-        "NON-COMMERCIAL — retained upstream notice. Do not use for paid work; underlying weight terms still require verification.",
+        "NON-COMMERCIAL — CC BY-NC-SA 4.0, confirmed by creator licence statement. Attribution, modification disclosure and ShareAlike required; exact local conversion remains unverified. Do not use for paid work.",
+      sources: [upstream, "https://github.com/upscayl/upscayl/issues/198"],
     },
   ),
   guide(
@@ -98,8 +112,10 @@ export const MODEL_CATALOG: ModelGuide[] = [
     "Natural images with a focus on sharpness, according to upstream.",
     "Inspect high-contrast photo edges for halos.",
     {
+      creator: "Kim2091",
       rights:
-        "NON-COMMERCIAL — retained upstream notice. Do not use for paid work; underlying weight terms still require verification.",
+        "NON-COMMERCIAL — CC BY-NC-SA 4.0, confirmed by creator card. Attribution, modification disclosure and ShareAlike required; exact local conversion remains unverified. Do not use for paid work.",
+      sources: [upstream, "https://huggingface.co/Kim2091/UltraSharp", "https://github.com/upscayl/upscayl/issues/198"],
     },
   ),
   guide(
@@ -148,8 +164,8 @@ export const MODEL_CATALOG: ModelGuide[] = [
       creator: "Phhofm",
       avoid: "Photo suitability is not established. " + caution,
       rights:
-        "Creator declares CC BY 4.0; attribution required. Exact local NCNN conversion identity is not hash-verified.",
-      evidence: "Creator model card plus upstream filename attribution.",
+        "CC BY 4.0. Verified FP16 adaptation; attribution, licence link and conversion description required.",
+      evidence: "Complete tensor data verified against creator FP32 NCNN; FP32 biases unchanged, input names/formatting adapted.",
       sources: [custom, phhofm + "4xHFA2k"],
     },
   ),
@@ -162,8 +178,8 @@ export const MODEL_CATALOG: ModelGuide[] = [
       creator: "Phhofm",
       avoid: "Do not assume strong denoising or compression repair. " + caution,
       rights:
-        "Creator declares CC BY 4.0; attribution required. Exact local NCNN conversion identity is not hash-verified.",
-      evidence: "Creator model card plus upstream filename attribution.",
+        "CC BY 4.0. Verified FP16 adaptation; attribution, licence link and conversion description required.",
+      evidence: "Complete tensor data verified against creator FP32 NCNN; FP32 biases unchanged, input names/formatting adapted.",
       sources: [custom, phhofm + "4xLSDIR"],
     },
   ),
@@ -187,12 +203,13 @@ export const MODEL_CATALOG: ModelGuide[] = [
     "Compare a photo against LSDIR when processing time matters.",
     {
       creator: "Phhofm",
+      rights: "CC BY 4.0. Exact creator FP16 weights verified; input names/formatting adapted. Retain attribution and identify adaptation.",
       performance:
         "Upstream describes SRVGGNET Compact inference as potentially faster. " +
         performance,
       evidence:
-        "Creator family notes; exact C3 conversion identity unverified.",
-      sources: [custom, phhofm + "4xLSDIRCompact"],
+        "Creator C3 card explicitly licenses CC BY 4.0; weight blob matches creator FP16 file, graph differs only by input names/formatting.",
+      sources: [custom, phhofm + "4xLSDIRCompact/Version3/C"],
     },
   ),
   guide(
@@ -236,16 +253,17 @@ export const MODEL_CATALOG: ModelGuide[] = [
       id.includes("WDN")
         ? "RealESRGAN General WDN v3"
         : "RealESRGAN General v3",
-      "Upstream identifies lightweight general-image models. Exact WDN identity is not established by creator documentation.",
+      "Creator general-v3 family targets general imagery with a lightweight network; test detail and denoising on a representative crop.",
       "Try a general photo and compare detail retention against Standard.",
       {
         creator: "Real-ESRGAN (upstream attribution)",
+        rights: "BSD-3-Clause. All local tensor bytes verified as FP16 adaptation of the corresponding original creator release. Retain complete licence notice.",
         performance:
           "Upstream describes lighter/faster processing; creator general-v3 notes limited deblur/denoise strength. " +
           performance,
         evidence:
-          "Family-level creator guidance; converted-file identity unverified.",
-        sources: [custom, real + "model_zoo.md"],
+          "All 101 tensors verified against corresponding General/WDN creator PTH; weights, biases and PReLU precision adapted to FP16.",
+        sources: [custom, real + "model_zoo.md", "https://github.com/xinntao/Real-ESRGAN/releases/tag/v0.2.5.0"],
       },
     ),
   ),

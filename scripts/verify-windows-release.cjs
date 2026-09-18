@@ -4,9 +4,12 @@ const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).diges
 const baseline=JSON.parse(fs.readFileSync(path.join(root,'tests/engine-baseline.json'))).files;
 assert.equal(hash(path.join(resources,'bin/upscayl-bin.exe')),baseline.find(f=>f.path==='resources/win/bin/upscayl-bin.exe').sha256,'native bytes changed');
 assert.deepEqual(fs.readdirSync(path.join(resources,'bin')).sort(),['upscayl-bin.exe'],'unexpected runtime/debug binaries');
-const models=['digital-art-4x.bin','digital-art-4x.param','upscayl-standard-4x.bin','upscayl-standard-4x.param'];
-assert.deepEqual(fs.readdirSync(path.join(resources,'models')).sort(),models);
-for(const file of models)assert.equal(hash(path.join(resources,'models',file)),baseline.find(f=>f.path==='resources/models/'+file).sha256,file+' changed');
+const builtin=['digital-art-4x','upscayl-standard-4x','upscayl-lite-4x','high-fidelity-4x'].flatMap(id=>[id+'.bin',id+'.param']);
+const custom=JSON.parse(fs.readFileSync(path.join(root,'resources/bundled-custom-models.json'))).files;
+assert.deepEqual(fs.readdirSync(path.join(resources,'models')).sort(),[...builtin,...custom.map(f=>f.name)].sort());
+for(const file of builtin)assert.equal(hash(path.join(resources,'models',file)),baseline.find(f=>f.path==='resources/models/'+file).sha256,file+' changed');
+for(const file of custom)assert.equal(hash(path.join(resources,'models',file.name)),file.sha256,file.name+' changed');
+assert(fs.statSync(path.join(resources,'notices/CC-BY-4.0.txt')).size>10000,'full CC BY licence missing');
 for(const file of ['LICENSE','NOTICE.md','LEGAL.md','THIRD-PARTY-NOTICES.md','Real-ESRGAN_LICENSE.txt','docs/MODEL-REDISTRIBUTION.md','docs/ENGINE-PROVENANCE.md','resources/brand/Poppins-OFL.txt','compiled/DEPENDENCY-LICENSES.txt','compiled/NATIVE-LICENSES.txt'])assert(fs.statSync(path.join(resources,'notices',file)).size>0,'missing notice '+file);
 for(const file of ['LICENSE.electron.txt','LICENSES.chromium.html','Rastercue.exe'])assert(fs.existsSync(path.join(app,file)),'missing Electron distribution file '+file);
 assert(fs.existsSync(path.join(root,'dist/rastercue-native-corresponding-source.tar.gz')),'missing full native source archive');

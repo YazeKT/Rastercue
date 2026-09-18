@@ -7,11 +7,13 @@ const useLogger = () => {
   const setLogTimes = useSetAtom(logTimesAtom);
 
   const logit = (...args: any) => {
-    log.log(...args);
+    // Native diagnostics are already written by the main process. Sending
+    // them straight back through electron-log doubles traffic during a job.
+    if (!String(args[0]).match(/BACKEND REPORTED|UPSCAYL_PROGRESS/)) log.log(...args);
 
     const data = [...args].join(" ");
-    setLogTimes((times) => [...times, Date.now()]);
-    setLogData((prevLogData) => [...prevLogData, data]);
+    setLogTimes((times) => [...times.slice(-999), Date.now()]);
+    setLogData((prevLogData) => [...prevLogData.slice(-999), data]);
   };
 
   return logit;

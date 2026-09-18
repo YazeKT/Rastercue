@@ -9,7 +9,7 @@ function load(relative, stubs = {}) {
   const code = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', relative), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true },
   }).outputText;
-  vm.runInNewContext(code, { exports, URL, Map, Set, require: id => {
+  vm.runInNewContext(code, { exports, URL, Map, Set, setTimeout, clearTimeout, require: id => {
     if (id in stubs) return stubs[id];
     throw new Error(`Unexpected import: ${id}`);
   } });
@@ -17,6 +17,20 @@ function load(relative, stubs = {}) {
 }
 const commands = load('common/electron-commands.ts');
 const policy = load('electron/utils/security-policy.ts', { '../../common/electron-commands': commands });
+test('visual progress floods coalesce without delaying diagnostics or retaining detached listeners', async () => {
+  const values = [];
+  const delivery = load('electron/utils/progress-delivery.ts').progressDelivery((event, value) => { assert.equal(event, undefined); values.push(value); }, true);
+  for (let i = 0; i < 10000; i++) delivery.receive({ privileged: true }, `${i % 100}%`);
+  assert.equal(values.length, 0);
+  await new Promise(resolve => setTimeout(resolve, 130));
+  assert.deepEqual(values, ['99%']);
+  delivery.receive({}, '25%');
+  delivery.receive({}, 'vkAllocateMemory failed');
+  assert.deepEqual(values.slice(-2), ['25%', 'vkAllocateMemory failed']);
+  delivery.receive({}, '50%'); delivery.cancel();
+  await new Promise(resolve => setTimeout(resolve, 130));
+  assert.equal(values.length, 3);
+});
 test('external links only permit HTTPS without credentials', () => {
   assert.equal(policy.isSafeExternalURL('https://github.com/YazeKT'), true);
   for (const value of ['javascript:alert(1)', 'file:///C:/Windows/System32/cmd.exe', 'data:text/html,x', 'http://example.com', 'https://user:secret@example.com', 'not a url']) {
@@ -41,6 +55,8 @@ test('preload restricts channels and never sends Electron events into the render
     electron: { ipcRenderer, webUtils: { getPathForFile: file => file.testPath }, contextBridge: { exposeInMainWorld: (name, value) => { bridges[name] = value; } } },
     './utils/get-device-specs': { getPlatform: () => 'win', getAppVersion: async () => '1', getDeviceSpecs: async () => ({}) },
     './utils/security-policy': policy,
+    './utils/progress-delivery': load('electron/utils/progress-delivery.ts'),
+    '../common/electron-commands': commands,
   });
   assert.throws(() => bridges.electron.send('arbitrary-channel', {}), /Unsupported/);
   assert.throws(() => bridges.electron.invoke('rastercue:clear', true), /Unsupported/);

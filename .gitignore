@@ -112,3 +112,6 @@ dockerfile
 /docs/Misc.md
 /update_upscayl_ncnn_binaries.sh
 /resources/release-notices/
+/resources/release-models/
+/renderer/public/MODEL-REDISTRIBUTION.md
+/renderer/public/CC-BY-4.0.txt

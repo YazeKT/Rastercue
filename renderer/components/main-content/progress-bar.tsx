@@ -78,6 +78,7 @@ function ProgressBar({
         <button onClick={stopHandler} className="btn btn-outline">
           {t("APP.PROGRESS_BAR.STOP_BUTTON_TITLE")}
         </button>
+        <p className="text-xs opacity-75">Ctrl+. / Cmd+. also stops the job. Already-written files are kept.</p>
       </div>
     </div>
   );

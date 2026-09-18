@@ -1,6 +1,7 @@
 import { translationAtom } from "@/atoms/translations-atom";
 import { useAtomValue } from "jotai";
 import React from "react";
+import { progressAtom } from '@/atoms/user-settings-atom';
 
 export function ResetSettingsButton({
   hideLabel = false,
@@ -8,6 +9,7 @@ export function ResetSettingsButton({
   hideLabel?: boolean;
 }) {
   const t = useAtomValue(translationAtom);
+  const progress = useAtomValue(progressAtom);
   return (
     <div className="flex flex-col items-start gap-2">
       {!hideLabel && (
@@ -17,7 +19,9 @@ export function ResetSettingsButton({
       )}
       <button
         className="btn btn-primary"
+        disabled={!!progress}
         onClick={async () => {
+          if (progress) return;
           if (!confirm('Reset processing preferences? History, presets, favourite models and statistics will be kept.')) return;
           for (const key of ['selectedModelId','doubleUpscayl','gpuId','saveImageAs','scale','rememberOutputFolder','savedOutputPath','noImageProcessing','compression','overwrite','ttaMode','customWidth','useCustomWidth','tileSize','copyMetadata']) localStorage.removeItem(key);
           location.reload();

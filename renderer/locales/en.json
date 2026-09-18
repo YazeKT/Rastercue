@@ -84,10 +84,10 @@
       "DESCRIPTION": "If enabled, Upscayl will collect anonymous usage data to improve the application interface and features."
     },
     "THEME": {
-      "TITLE": "UPSCAYL THEME"
+      "TITLE": "THEME"
     },
     "LANGUAGE": {
-      "TITLE": "UPSCAYL LANGUAGE"
+      "TITLE": "LANGUAGE"
     },
     "CUSTOM_TILE_SIZE": {
       "TITLE": "CUSTOM TILE SIZE",

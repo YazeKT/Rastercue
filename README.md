@@ -4,7 +4,7 @@
 
 **A local image-upscaling workspace for designers, by [Yaze Media](https://github.com/YazeKT).**
 
-[Download Windows beta](https://github.com/YazeKT/Rastercue/releases/tag/v1.0.0-beta.1) · [User guide](docs/USER-GUIDE.md) · [Changelog](CHANGELOG.md) · [Licences and credits](THIRD-PARTY-NOTICES.md)
+[Download Windows beta](https://github.com/YazeKT/Rastercue/releases/tag/v1.0.0-beta.2) · [User guide](docs/USER-GUIDE.md) · [Changelog](CHANGELOG.md) · [Licences and credits](THIRD-PARTY-NOTICES.md)
 
 [![Source verification](https://github.com/YazeKT/Rastercue/actions/workflows/ci.yml/badge.svg)](https://github.com/YazeKT/Rastercue/actions/workflows/ci.yml)
 
@@ -14,7 +14,7 @@ Rastercue is an independently branded, UI-focused derivative of [Upscayl](https:
 
 ## What changed
 
-- Permanent compact left/right panels; smaller-height workflow pages and paginated settings.
+- Permanent compact left/right panels; smaller-height workflow pages and a full Settings popup without arrow pagination.
 - Dark-first Rastercue identity, flat SVG logo and platform icons.
 - Enlarged searchable model browser, usage/avoidance guidance, provenance and honest licence warnings; favourites and named presets.
 - Persistent before/after slider, synchronised pan/zoom, numeric zoom, Fit/100%/Reset, session bookmarks and optional lens.
@@ -29,11 +29,11 @@ Single, batch, double-pass, cancellation, supported formats, metadata/compressio
 
 **Windows x64 beta for designer testing.** The release provides an NSIS `.exe` installer and ZIP distribution. It is unsigned: Windows may show SmartScreen warnings, and no verified publisher identity is claimed. macOS/Linux runtime, signing/notarisation, clean-machine acceptance and hosted older-version updater installation remain unverified. New interface guidance is English; inherited language/theme choices remain. See [evidence and remaining work](docs/IMPLEMENTATION-STATUS.md).
 
-The intended RX 580 / i5-8600K / 32 GB work PC is not yet tested. The development laptop has intermittent Vulkan memory-allocation failures, including the final hardware-accelerated processing smoke. This release is explicitly for work-PC evaluation, not production acceptance. Follow the [work-PC comparison checklist](docs/WORK-PC-TEST.md).
+The owner reports beta 1 works well on the RX 580 / i5-8600K / 32 GB work PC, with cancellation/settings feedback addressed in beta 2. Comprehensive designer acceptance remains pending. The development laptop has intermittent Vulkan memory-allocation failures. This is a testing release, not production acceptance. Follow the [work-PC checklist](docs/WORK-PC-TEST.md).
 
 The release security pass disables renderer Node integration, enables isolation/web security and restricts navigation/IPC. Full and production npm audits reported zero known advisories on 18 September 2026; this is not an independent security audit. The preload is not fully sandboxed. Read [SECURITY.md](SECURITY.md), use trusted inputs and retain the remaining release gates.
 
-Windows packages include the unchanged engine and verified Standard/Digital Art models. The release also offers a separately credited custom pack: anime video x2/x3/x4 and Nomos8kSC. Other model weights are excluded because their exact rights/identity remain unverified. The model browser labels unavailable models, and missing presets never silently substitute. See [file-level rights evidence](docs/MODEL-REDISTRIBUTION.md).
+Beta 2 includes the unchanged engine and 13 verified models automatically: Standard, Digital Art, Lite, High Fidelity, anime video x2/x3/x4, Nomos8kSC, HFA2k, LSDIR, LSDIRCompactC3, General v3 and General WDN v3. No separate pack import is needed. Eight remaining pairs are excluded because exact provenance/redistribution terms remain unresolved. Missing models are labelled, and presets never silently substitute. See [file-level rights evidence](docs/MODEL-REDISTRIBUTION.md).
 
 Requires Windows x64, a Vulkan-capable GPU/driver, and the [Microsoft Visual C++ x64 Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) installed directly from Microsoft. No Microsoft runtime DLLs are bundled. ZIP users must extract the **whole folder**, not just the executable. Source and binary artifacts are separate; no weights/installers are committed to Git. No model downloads occur inside the app.
 

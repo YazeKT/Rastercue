@@ -1,4 +1,5 @@
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
+import sharp from "sharp";
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -55,6 +56,12 @@ export function registerRastercueHistory(win: BrowserWindow): void {
 
   const snapshot = (): HistorySnapshot => ({ version: 1, folder, records, current: active || records[0] || null, persistenceError });
   const notify = () => { if (!win.isDestroyed()) send("rastercue:changed", snapshot()); };
+  let progressTimer: ReturnType<typeof setTimeout> | undefined;
+  const notifyProgress = () => {
+    if (progressTimer) return;
+    progressTimer = setTimeout(() => { progressTimer = undefined; notify(); }, 200);
+  };
+  win.once('closed', () => { if (progressTimer) clearTimeout(progressTimer); });
   const persist = () => {
     const targetFolder = folder;
     const data = JSON.stringify({ version: 1, records }, null, 2);
@@ -79,19 +86,19 @@ export function registerRastercueHistory(win: BrowserWindow): void {
       const stat = await fs.promises.stat(filePath);
       if (!stat.isFile()) return result;
       result.bytes = stat.size; result.missing = false;
-      const image = nativeImage.createFromPath(filePath);
-      if (!image.isEmpty()) { const size = image.getSize(); result.width = size.width; result.height = size.height; }
+      // Read headers asynchronously, never decode a full designer image on
+      // Electron's main thread (which also receives Stop).
+      const size = await sharp(filePath).metadata();
+      result.width = size.width ?? null; result.height = size.height ?? null;
     } catch { /* Missing and unsupported files are honest nulls. */ }
     return result;
   }
   async function thumbnail(job: RastercueJob, file: HistoryFile) {
     try {
-      const image = nativeImage.createFromPath(file.output?.path || file.source.path);
-      if (image.isEmpty()) return;
       const thumbnailFolder = path.join(folder, "thumbnails");
       await fs.promises.mkdir(thumbnailFolder, { recursive: true });
       const target = path.join(thumbnailFolder, `${job.id}-${file.id}.png`);
-      await fs.promises.writeFile(target, image.resize({ width: 144 }).toPNG());
+      await sharp(file.output?.path || file.source.path).resize({ width: 144, height: 144, fit: 'inside', withoutEnlargement: true }).png().toFile(target);
       file.thumbnail = pathToFileURL(target).href;
     } catch { /* Thumbnail failure never makes processing fail. */ }
   }
@@ -171,7 +178,7 @@ export function registerRastercueHistory(win: BrowserWindow): void {
     } else if ([C.UPSCAYL_WARNING, C.METADATA_ERROR].includes(channel as any)) { job.warnings.push(String(payload)); void persist(); notify(); }
     else if ([C.UPSCAYL_PROGRESS, C.DOUBLE_UPSCAYL_PROGRESS, C.FOLDER_UPSCAYL_PROGRESS].includes(channel as any)) {
       const text = String(payload); const percentages = text.match(/\d+(?:\.\d+)?%/g);
-      job.progress = percentages ? percentages[percentages.length - 1] : text.trim().slice(-120); notify();
+      job.progress = percentages ? percentages[percentages.length - 1] : text.trim().slice(-120); notifyProgress();
     } else if (channel === C.SCALING_AND_CONVERTING) { job.progress = "Finishing image conversion…"; notify(); }
   }
   win.webContents.send = ((channel: string, ...args: any[]) => { send(channel, ...args); try { observe(channel, args[0]); } catch { /* Observer cannot disrupt engine delivery. */ } }) as typeof win.webContents.send;
@@ -203,6 +210,7 @@ export function registerRastercueHistory(win: BrowserWindow): void {
   handle("rename", async (jobId: string, fileId: string, name: string) => { const { job, file } = owned(jobId, fileId); await renameOutput(job, file!, name); await persist(); notify(); return snapshot(); });
   handle("open", async (jobId: string, fileId: string) => { const { file } = owned(jobId, fileId); if (!file?.output || !fs.existsSync(file.output.path)) throw new Error("Output file is missing."); const error = await shell.openPath(file.output.path); if (error) throw new Error(error); });
   handle("openFolder", async (jobId?: string) => { const target = jobId ? owned(jobId).job.destination : folder; const error = await shell.openPath(target); if (error) throw new Error(error); });
+  handle("openLogs", async () => { const error = await shell.openPath(app.getPath('logs')); if (error) throw new Error(error); });
   handle("relocate", async () => {
     if (isRastercueJobActive() || finishing) throw new Error("Wait for the current job before moving history.");
     const selected = await dialog.showOpenDialog(win, { title: "Choose a parent folder for Rastercue history", properties: ["openDirectory", "createDirectory"] });

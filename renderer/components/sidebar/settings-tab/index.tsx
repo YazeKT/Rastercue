@@ -5,9 +5,10 @@ import { CustomModelsFolderSelect } from "./select-custom-models-folder";
 import { LogArea } from "./log-area";
 import { SelectImageScale } from "./select-image-scale";
 import { SelectImageFormat } from "./select-image-format";
-import React, { useEffect, useRef, useState } from "react";
-import { useAtom } from "jotai";
-import { customModelsPathAtom, scaleAtom } from "@/atoms/user-settings-atom";
+import React, { useState } from "react";
+import { useAtom, useAtomValue } from "jotai";
+import { customModelsPathAtom, scaleAtom, progressAtom } from "@/atoms/user-settings-atom";
+import { ELECTRON_COMMANDS } from "@common/electron-commands";
 import { InputCompression } from "./input-compression";
 import OverwriteToggle from "./overwrite-toggle";
 import { ResetSettingsButton } from "./reset-settings-button";
@@ -16,28 +17,23 @@ import { InputCustomResolution } from "./input-custom-resolution";
 import { InputTileSize } from "./input-tile-size";
 import LanguageSwitcher from "./language-switcher";
 import { ImageFormat } from "@/lib/valid-formats";
-import AutoUpdateToggle from "./auto-update-toggle";
 import TTAModeToggle from "./tta-mode-toggle";
 import CopyMetadataToggle from "./copy-metadata-toggle";
-import AboutDialog from "@/components/rastercue/about-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SupportPanel } from "./support-panel";
 interface IProps {
   batchMode:boolean;saveImageAs:ImageFormat;setSaveImageAs:React.Dispatch<React.SetStateAction<ImageFormat>>;
   compression:number;setCompression:React.Dispatch<React.SetStateAction<number>>;
   gpuId:string;setGpuId:React.Dispatch<React.SetStateAction<string>>;
   logData:string[];show?:boolean;setShow?:React.Dispatch<React.SetStateAction<boolean>>;
   setDontShowCloudModal?:React.Dispatch<React.SetStateAction<boolean>>;
+  open:boolean; onOpenChange:(open:boolean)=>void;
 }
-export default function SettingsTab({batchMode,compression,setCompression,gpuId,setGpuId,saveImageAs,setSaveImageAs,logData}:IProps) {
-  const [group,setGroup]=useState(0),[page,setPage]=useState(0),[perPage,setPerPage]=useState(2);
-  const body=useRef<HTMLDivElement>(null);
+export default function SettingsTab({batchMode,compression,setCompression,gpuId,setGpuId,saveImageAs,setSaveImageAs,logData,open,onOpenChange}:IProps) {
+  const [support,setSupport]=useState(false);
+  const progress=useAtomValue(progressAtom);
   const [customModelsPath,setCustomModelsPath]=useAtom(customModelsPathAtom);
   const [scale,setScale]=useAtom(scaleAtom);
-  useEffect(()=>{
-    if(!body.current)return;
-    const observer=new ResizeObserver(([e])=>setPerPage(e.contentRect.height<420?1:2));
-    observer.observe(body.current);return()=>observer.disconnect();
-  },[]);
-  useEffect(()=>setPage(0),[group,perPage]);
   const format=(f:string)=>setSaveImageAs(f as ImageFormat);
   const groups=[
     [
@@ -59,24 +55,20 @@ export default function SettingsTab({batchMode,compression,setCompression,gpuId,
       [<LanguageSwitcher/>,"Changes translated interface labels. Example: choose your preferred language without changing the image."],
       [<CustomModelsFolderSelect customModelsPath={customModelsPath} setCustomModelsPath={setCustomModelsPath}/>,"Loads paired custom model files from a folder. Example: select a folder containing matching .bin and .param files."],
       [<TurnOffNotificationsToggle/>,"Controls desktop notifications. Example: turn them off during a presentation."],
-      [<AutoUpdateToggle/>,"Checks Rastercue releases when enabled. Example: disable automatic updates while working offline."],
       [<ResetSettingsButton/>,"Restores application preferences, not images or job history. Example: reset after experimenting with processing settings."],
-      [<AboutDialog/>,"Read Rastercue's changelog and upstream licences. Example: check model-rights notices before a paid design job."],
     ],
   ];
-  const controls=groups[group],count=Math.ceil(controls.length/perPage);
-  return <section className="rastercue-settings">
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="flex h-[90vh] max-h-[850px] w-[94vw] max-w-[1100px] flex-col gap-4 overflow-hidden bg-base-100 text-base-content">
+    <DialogHeader><DialogTitle>Settings & support</DialogTitle><DialogDescription>All your preferences in one place. Changes are saved as you make them.</DialogDescription></DialogHeader>
     <div className="compact-tabs" role="group" aria-label="Settings groups">
-      {["Output","Processing","Application"].map((label,i)=><button key={label} aria-pressed={group===i} className={group===i?"active":""} onClick={()=>setGroup(i)}>{label}</button>)}
+      <button aria-pressed={!support} className={!support?"active":""} onClick={()=>setSupport(false)}>All settings</button>
+      <button aria-pressed={support} className={support?"active":""} onClick={()=>setSupport(true)}>Support</button>
     </div>
-    <div className="rastercue-settings-body" ref={body}>
-      {controls.slice(page*perPage,page*perPage+perPage).map(([control,example],i)=><div className="setting-field" key={group+"-"+page+"-"+i}>{control}<p className="setting-example">{example}</p></div>)}
+    <div className="min-h-0 flex-1 overflow-y-auto pr-2">
+      {support ? <SupportPanel onReplayGuide={()=>{onOpenChange(false);window.dispatchEvent(new Event('rastercue:show-guide'));}}/> : <div className="grid items-start gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {groups.map((controls,group)=><section key={group} className="space-y-5 rounded-lg border border-base-content/15 bg-base-200 p-4"><h2 className="border-b border-base-content/15 pb-3 text-lg font-semibold">{["Output","Processing","Application"][group]}</h2>{controls.map(([control,example],i)=><div className="setting-field" key={i}>{control}<p className="setting-example">{example}</p></div>)}</section>)}
+      </div>}
     </div>
-    <div className="compact-pagination">
-      <button className="btn" disabled={page===0} onClick={()=>setPage(p=>p-1)}>Previous</button>
-      <span>{page+1} / {count}</span>
-      <button className="btn" disabled={page>=count-1} onClick={()=>setPage(p=>p+1)}>Next</button>
-    </div>
-    <LogArea logData={logData}/>
-  </section>;
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-base-content/15 pt-3"><LogArea logData={logData}/><div className="flex gap-2">{progress?<button className="btn btn-sm" onClick={()=>window.electron.send(ELECTRON_COMMANDS.STOP)}>Cancel job</button>:null}<button className="btn btn-primary btn-sm" onClick={()=>onOpenChange(false)}>Back to workspace</button></div></div>
+  </DialogContent></Dialog>;
 }
