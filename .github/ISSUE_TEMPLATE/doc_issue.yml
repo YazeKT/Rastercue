@@ -1,0 +1,23 @@
+name: Documentation Issue
+description: "Issues with Rastercue documentation. Use Bug Report for app problems."
+labels: documentation
+body:
+- type: checkboxes
+  attributes:
+    label: Checklist
+    options:
+      - label: I have checked the [Rastercue documentation](https://github.com/YazeKT/Rastercue/blob/main/README.md).
+        required: true
+      - label: I have checked that this issue isn't addressed in any other issue or pull request.
+        required: true
+- type: textarea
+  attributes: 
+    label: Describe the Issue
+    description: 💥 What would you like to improve?
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Screenshots
+    description: 🤳 Got screenshots?

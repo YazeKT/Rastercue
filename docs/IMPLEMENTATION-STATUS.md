@@ -1,0 +1,25 @@
+# Local implementation evidence
+
+Initial source publication prepared18September2026: Yaze Media footer links to the GitHub profile; progress emblem uses the Rastercue SVG. Packaged UI test checks both, captures the loading state and completes a single PNG job. Source index excludes private artifacts/native assets/weights; pinned asset origin verified against19 upstream Git blobs. Full legal/privacy/security/contribution/source-setup documentation included. Security dependency advisories remain a binary-release gate. Local build remains unsigned; source publication does not assert packaged-release readiness.
+
+Built: identity/assets; permanent compact workspace; model guidance for seven built-ins and fourteen locally supplied models; favourites/presets; slider/zoom/pan/bookmarks/lens; current job measurements and managed naming; persistent local history; readable expanded logs; dark/JPG defaults; About/licences/changelog; privacy removals and separate app data; Rastercue release provider and idle restart guard; native build-only workflow.
+
+Passed locally: production TypeScript/Next build; seven regression contracts (28 protected file hashes, model IDs/scales/rights, engine argument and renderer payload contracts); history safety/persistence test suite; direct engine single PNG/JPG, batch, double, custom2× and cancellation smoke. Baseline decoded PNG output matched. Windows unpacked app launches with isolated app data.
+
+## Alpha → JPG correction (18 September 2026)
+
+User-reported saved image corruption confirmed visually, not dismissed as preview: original512×286 RGBA butterfly PNG produced a striped/desaturated2048×1144 JPG. Same unchanged binary reproduced this directly; its PNG output was clean. The same input with the unused alpha channel removed produced clean JPG. Earlier RGB-only smoke tests missed this case.
+
+Narrow compatibility wrapper now prepares temporary RGB inputs only for JPG output; opaque RGB pixels are preserved exactly and transparent areas flatten to the disclosed white background. Engine binary, model weights, processing command handlers, argument builder and all28 protected files still match baseline hashes exactly. Output encoding/compression remains the native engine's. PNG/WebP retain the original synchronous spawn path. Cancellation during preparation prevents launching the engine; temporary data is cleaned up.
+
+Sixteen regression tests pass, including alpha pixel preservation, source safety, batch staging/cleanup, cancellation and lifecycle forwarding. Added sharp0.33.5 as an explicit production dependency (same already-used version, not an upgrade) so packaged preparation and thumbnails work. Rebuilt Windows unpacked app processed the actual failing butterfly image through UI to a clean colour JPG in4684ms. Visual inspection passed; decoded output pixels matched the original engine's clean RGB-input reference exactly (mean absolute channel error0). Existing damaged outputs were preserved; use fresh destination/name or explicit overwrite to regenerate.
+
+SVG master: resources/brand/rastercue.svg. Matching inline SVG is used in workspace/loading/About, master SVG in favicon, and master-generated PNG/ICO/ICNS platform assets. Standalone monochrome and wordmark SVGs are also copied into public assets. Packaged window icon path now resolves the shipped Rastercue icon.
+
+Additional packaged main-process IPC smoke passed: unchanged PNG single decoded pixels match baseline; two RGBA inputs exported as colour JPG batch; RGBA two-pass JPG reaches1024×768; JPG cancellation is recorded as cancelled and creates no completed output. Batch and double saved JPGs inspected visually with no stripe/grayscale fault. Sources remain byte-identical. This is packaged IPC evidence, not a comprehensive interactive UI test of every processing option.
+
+Packaged Windows UI additionally passed: laptop window1366×728 (content1350×689), Start-action bounds, smaller1100×600 Output workflow page, and a real single PNG job through Select Image → destination → Start, completed in2410ms with local history. Fresh screenshots confirm Start is no longer clipped. NSIS/ZIP build generation succeeded; those first installer archives precede final responsive/accessibility adjustments, so the latest unpacked build is the current test target.
+
+Pending: full packaged batch/double/cancellation/failure UI regression, all settings/dialog interaction checks, comprehensive keyboard/screen-reader audit, translation of new English copy, high-DPI/long-translation checks, designer image acceptance. Independent review completed; identified Start clipping, hidden examples and bookmark overflow; workflow pages and bookmark pagination correct the layout issues. Workspace selectors now use ordinary pressed buttons rather than an incomplete ARIA-tab pattern.
+
+macOS/Linux runtime, signing/notarisation, hosted updates and publication are not verified. No upstream settings migration, network model download or extra weight redistribution is included. Original engine processing files/binaries/model pairs remain hash-identical.

@@ -1,0 +1,22 @@
+name: Source verification
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Ephemeral baseline verification only; no weights/binaries exported.
+      - run: npm run assets:fetch -- --acknowledge-model-terms
+      - run: npm run build
+      - run: npm run test:rastercue
+      - run: npm run test:history

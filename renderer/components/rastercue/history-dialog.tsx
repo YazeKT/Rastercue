@@ -1,0 +1,45 @@
+import { useEffect, useMemo, useState } from "react";
+import { HistorySnapshot, JobSettings } from "@common/rastercue-types";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../ui/dialog";
+import { readableBytes } from "./current-job-panel";
+
+export default function HistoryDialog({ open, onClose, onRestore }: { open: boolean; onClose: () => void; onRestore?: (settings: JobSettings) => void }) {
+  const [snapshot, setSnapshot] = useState<HistorySnapshot | null>(null);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(0);
+  const [error, setError] = useState("");
+  const [selected, setSelected] = useState("");
+  const [rename, setRename] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
+  useEffect(() => {
+    if (!open || !window.rastercue) return;
+    window.rastercue.list().then(setSnapshot).catch(e => setError(String(e)));
+    return window.rastercue.onChanged(setSnapshot);
+  }, [open]);
+  const jobs = useMemo(() => (snapshot?.records || []).filter(j => (status === "all" || j.status === status) && `${j.model} ${j.kind} ${j.files.map(f => f.source.path + " " + f.output?.path).join(" ")}`.toLowerCase().includes(query.toLowerCase())), [snapshot, query, status]);
+  const pageCount = Math.max(1, Math.ceil(jobs.length / 8));
+  const currentPage = Math.min(page, pageCount - 1);
+  const detail = snapshot?.records.find(j => j.id === selected);
+  async function action(fn: () => Promise<any>) { try { const result = await fn(); if (result?.records) setSnapshot(result); setError(""); } catch (e) { setError(String(e)); } }
+  return <Dialog open={open} onOpenChange={value => { if (!value) onClose(); }}><DialogContent className="flex h-[88vh] w-[92vw] max-w-[1100px] flex-col gap-3 p-5">
+    <DialogTitle>Job history</DialogTitle><DialogDescription>Saved locally with thumbnails. Clearing history never deletes your source images or output files.</DialogDescription>
+    <div className="flex flex-wrap gap-2"><input aria-label="Search history" className="input input-bordered input-sm flex-1" placeholder="Search files or models…" value={query} onChange={e => { setQuery(e.target.value); setPage(0); }} /><select aria-label="Filter job status" className="select select-bordered select-sm" value={status} onChange={e => { setStatus(e.target.value); setPage(0); }}><option value="all">All jobs</option>{["completed", "failed", "cancelled", "interrupted", "running"].map(s => <option key={s} value={s}>{s}</option>)}</select><button className="btn btn-sm" onClick={() => action(() => window.rastercue.openFolder())}>Open history folder</button><button className="btn btn-sm" onClick={() => action(() => window.rastercue.relocate())}>Change folder</button></div>
+    <div className="grid min-h-0 flex-1 grid-cols-[minmax(260px,1fr)_minmax(300px,1.1fr)] gap-4">
+      <div className="min-h-0 overflow-y-auto space-y-2 pr-1">{jobs.length === 0 ? <p className="p-4 text-sm opacity-65">No matching jobs. Completed and interrupted jobs are retained here across restarts.</p> : jobs.slice(currentPage * 8, currentPage * 8 + 8).map(job => <button key={job.id} onClick={() => { setSelected(job.id); setRename(""); }} className={`flex w-full gap-3 rounded-lg border p-3 text-left ${selected === job.id ? "border-primary bg-primary/10" : "border-base-300 bg-base-200"}`}>
+        {job.files[0]?.thumbnail && <img alt="" src={job.files[0].thumbnail} className="h-14 w-14 rounded object-contain bg-black/20" />}<div className="min-w-0 text-xs"><p className="truncate font-semibold">{job.kind === "batch" ? `${job.files.length} images` : job.files[0]?.source.path.split(/[\\/]/).pop() || "Job"}</p><p className="mt-1 capitalize">{job.status} · {job.kind} · {job.scale}×</p><p className="mt-1 opacity-60">{new Date(job.startedAt).toLocaleString()}</p><p className="truncate opacity-60">{job.model}</p></div>
+      </button>)}</div>
+      <div className="min-h-0 overflow-y-auto rounded-lg bg-base-200 p-4 text-sm">{!detail ? <p className="opacity-60">Select a job to see its file sizes, settings, outputs, and warnings.</p> : <>
+        <h3 className="font-semibold capitalize">{detail.kind} upscale · {detail.status}</h3><p className="mt-1 text-xs opacity-60">{detail.model} · {detail.durationMs != null ? `${(detail.durationMs / 1000).toFixed(1)} seconds` : "Duration unavailable"}</p>
+        <div className="my-3 flex gap-2"><button className="btn btn-sm" onClick={() => action(() => window.rastercue.openFolder(detail.id))}>Output folder</button>{onRestore && <button className="btn btn-sm" onClick={() => { onRestore({ ...detail.settings, doubleUpscayl: detail.kind === "double" }); onClose(); }}>Restore settings</button>}</div>
+        {detail.files.map(file => <div key={file.id} className="mb-3 rounded border border-base-300 p-3 text-xs"><p className="break-all font-medium">{file.source.path.split(/[\\/]/).pop()}</p><p className="mt-1 opacity-65">Before: {readableBytes(file.source.bytes)}{file.source.width ? ` · ${file.source.width} × ${file.source.height}px` : ""}{file.source.missing ? " · source missing" : ""}</p><p className="mt-1 opacity-65">After: {readableBytes(file.output?.bytes)}{file.output?.width ? ` · ${file.output.width} × ${file.output.height}px` : ""}{file.output?.missing ? " · output missing" : ""}</p><p className="mt-2 break-all opacity-65">{file.output?.path || "No recorded output"}</p>
+          {file.output && detail.status === "completed" && <><button disabled={file.output.missing} className="btn btn-xs mt-2" onClick={() => action(() => window.rastercue.open(detail.id, file.id))}>Open output</button><div className="mt-2 flex gap-2"><input aria-label={`New filename for ${file.source.path}`} className="input input-bordered input-sm min-w-0 flex-1" placeholder="New filename (format kept)" value={rename} onChange={e => setRename(e.target.value)} /><button className="btn btn-sm" disabled={!rename.trim() || file.output.missing} onClick={() => action(() => window.rastercue.rename(detail.id, file.id, rename))}>Rename</button></div></>}
+        </div>)}
+        {detail.warnings.map((warning, i) => <p key={i} className="mb-2 break-words rounded bg-amber-400/10 p-2 text-xs text-amber-300">{warning}</p>)}
+        <details className="mt-3 text-xs"><summary className="cursor-pointer">Recorded processing settings</summary><dl className="mt-2 space-y-1">{Object.entries(detail.settings).filter(([k]) => !/Path/.test(k)).map(([key, value]) => <div key={key} className="flex justify-between gap-3"><dt className="opacity-60">{key}</dt><dd className="break-all">{String(value)}</dd></div>)}</dl></details>
+      </>}</div>
+    </div>
+    {(error || snapshot?.persistenceError) && <p role="alert" className="text-error text-xs">{error || snapshot.persistenceError}</p>}
+    <div className="flex items-center justify-between gap-3 border-t border-base-300 pt-3"><div className="flex items-center gap-2"><button className="btn btn-xs" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Previous</button><span className="text-xs">{currentPage + 1} / {pageCount} · {jobs.length} jobs</span><button className="btn btn-xs" disabled={currentPage >= pageCount - 1} onClick={() => setPage(currentPage + 1)}>Next</button></div>{confirmClear ? <div className="flex items-center gap-2"><span className="text-xs">Delete records/thumbnails only?</span><button className="btn btn-xs btn-error" onClick={() => action(async () => { const result = await window.rastercue.clear(true); setConfirmClear(false); setSelected(""); return result; })}>Confirm clear</button><button className="btn btn-xs" onClick={() => setConfirmClear(false)}>Cancel</button></div> : <button className="btn btn-xs" onClick={() => setConfirmClear(true)}>Clear history…</button>}</div>
+  </DialogContent></Dialog>;
+}

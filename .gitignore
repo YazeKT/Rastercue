@@ -1,0 +1,113 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+/main/*.js
+out/
+
+# testing
+/coverage
+
+# next.js
+/renderer/.next/
+/renderer/out/
+
+# production
+/dist/
+/export/electron
+/export/common
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# vercel
+.vercel
+
+#flatpak
+.flatpak/
+.flatpak-builder
+repo/
+build-dir/
+
+#vscode
+.vscode/
+
+main/*.js
+main/utils/*.js
+
+.env
+*.provisionprofile
+flags.ts
+*.p12
+*.pfx
+tests/artifacts/
+tests/baseline-*.png
+tests/baseline-runtime.json
+.impeccable/review/
+*.log
+dockerfile
+*.tsbuildinfo
+.env*
+!.env.example
+*.key
+*.crt
+/resources/models/
+/resources/win/bin/
+/resources/mac/bin/
+/resources/linux/bin/
+/models/
+/ups/
+/apis/
+/flatpak/
+/mac-dev.json
+/mas.json
+/mas-dev.json
+/scripts/test.py
+/docs/api/
+/docs/history/
+/docs/tasks/
+/docs/upload/
+/docs/troubleshooting/
+/docs/images/
+/docs/logo/
+/docs/*.mdx
+/docs/openapi.yaml
+/docs/mint.json
+/docs/favicon.svg
+/docs/image.png
+/1080p_banner.jpg
+/1080p_explainer.jpg
+/download.jpg
+/screen1.png
+/to_upscale.jpeg
+/upscayl.mp4
+/news.md
+/COMPARISONS.MD
+/export/
+/electron/build/
+/scripts/baboon*.png
+/renderer/public/model-comparison/
+/renderer/public/Upscayl New Page.png
+/renderer/public/icon-purple.png
+/renderer/public/icon.png
+/renderer/public/logo.svg
+/docs/Guide.md
+/docs/Compatibility-List.md
+/docs/Model-Conversion-Guide.md
+/docs/Misc.md
+/update_upscayl_ncnn_binaries.sh
