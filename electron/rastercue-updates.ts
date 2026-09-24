@@ -7,6 +7,9 @@ import logit from './utils/logit';
 export function registerRastercueUpdates(win: BrowserWindow) {
   autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.autoDownload = true;
+  autoUpdater.allowPrerelease = false;
+  autoUpdater.allowDowngrade = false;
+  autoUpdater.fullChangelog = true;
   let pending: UpdateDownloadedEvent | null = null;
   let promptOpen = false;
   let snoozedUntil = 0;

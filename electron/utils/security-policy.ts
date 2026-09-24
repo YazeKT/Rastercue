@@ -10,6 +10,7 @@ export const INVOKE_CHANNELS = new Set<string>([
   C.SELECT_FOLDER, C.SELECT_FILE, C.SELECT_CUSTOM_MODEL_FOLDER,
   'get-gpu-info', 'get-app-version',
   'rastercue-models:bundled-folder',
+  'rastercue-hardware:detect', 'rastercue-hardware:software',
 ]);
 export const RECEIVE_CHANNELS = new Set<string>(Object.values(C));
 

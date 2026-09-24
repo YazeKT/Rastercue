@@ -64,6 +64,8 @@ test('preload restricts channels and never sends Electron events into the render
   bridges.electron.send(commands.ELECTRON_COMMANDS.STOP);
   assert.equal(sent[0][0], commands.ELECTRON_COMMANDS.STOP);
   assert.equal(bridges.electron.getFilePath({ testPath: 'C:/image.png' }), 'C:/image.png');
+  assert.equal(typeof bridges.rastercueHardware.detect, 'function');
+  assert.equal(typeof bridges.rastercueHardware.software, 'function');
   const callback = (event, value) => { assert.equal(event, undefined); assert.equal(value, 'progress'); };
   bridges.electron.on(commands.ELECTRON_COMMANDS.LOG, callback);
   callbacks[commands.ELECTRON_COMMANDS.LOG]({ sender: { dangerous: true } }, 'progress');

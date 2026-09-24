@@ -31,6 +31,7 @@ export default function MoreOptionsDrawer({resetImagePaths}: {
     if(["jpg","png","webp"].includes(String(saved.saveImageAs)))store.set(settingsAtoms.saveImageAsAtom,saved.saveImageAs as "jpg"|"png"|"webp");
     store.set(settingsAtoms.doubleUpscaylAtom,!!saved.doubleUpscayl);
     store.set(settingsAtoms.gpuIdAtom,saved.gpuId==null?"":String(saved.gpuId));
+    if(["original-vulkan","rastercue-vulkan","cpu"].includes(String(saved.backendId)))store.set(settingsAtoms.computeBackendAtom,saved.backendId as "original-vulkan"|"rastercue-vulkan"|"cpu");
     store.set(settingsAtoms.compressionAtom,Number(saved.compression)||0);
     store.set(settingsAtoms.customWidthAtom,Number(saved.customWidth)||0);
     store.set(settingsAtoms.useCustomWidthAtom,!!saved.useCustomWidth);

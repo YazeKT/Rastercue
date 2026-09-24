@@ -12,14 +12,15 @@ const AutoUpdateToggle = () => {
       <p className="text-xs text-base-content/80">
         {t("SETTINGS.AUTO_UPDATE.DESCRIPTION")}
       </p>
-      <input
-        type="checkbox"
-        className="toggle"
-        checked={autoUpdate}
-        onClick={() => {
-          setAutoUpdate((prev) => !prev);
-        }}
-      />
+      <label className="flex items-center gap-3 text-xs">
+        <input
+          type="checkbox"
+          className="toggle"
+          checked={autoUpdate}
+          onChange={(event) => setAutoUpdate(event.target.checked)}
+        />
+        Automatically download stable updates from GitHub
+      </label>
     </div>
   );
 };

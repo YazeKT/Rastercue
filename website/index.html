@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111218" />
+    <meta
+      name="description"
+      content="Rastercue is a local, designer-focused image upscaling workspace built around the preserved Upscayl processing foundation."
+    />
+    <meta property="og:title" content="Rastercue — local image upscaling for designers" />
+    <meta
+      property="og:description"
+      content="Inspect, upscale and prepare raster artwork with a protected Upscayl core and a studio-grade local workflow."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="./assets/workspace.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="./assets/rastercue.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+    <title>Rastercue — local image upscaling for designers</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <a class="brand" href="#top" aria-label="Rastercue home">
+        <img src="./assets/rastercue.svg" alt="" width="34" height="34" />
+        <span>Rastercue</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">
+        <span class="sr-only">Open navigation</span>
+        <span aria-hidden="true"></span><span aria-hidden="true"></span>
+      </button>
+      <nav id="site-navigation" class="site-nav" aria-label="Primary navigation">
+        <a href="#studio">Studio</a>
+        <a href="#compute">Hardware</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#evidence">Evidence</a>
+        <a href="https://github.com/YazeKT/Rastercue">GitHub</a>
+      </nav>
+      <a class="header-status" href="#release-gate">
+        <span class="status-dot" aria-hidden="true"></span>
+        Stable 1.0
+      </a>
+    </header>
+
+    <main id="main">
+      <section id="top" class="hero" aria-labelledby="hero-title">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="hero-copy reveal">
+          <p class="section-label">Designer workstation / local processing / Windows 10/11 x64</p>
+          <h1 id="hero-title">Upscale with<br /><span>proof in view.</span></h1>
+          <p class="hero-intro">
+            Choose the model and device, inspect the result, and keep the source under your control. Rastercue
+            turns the proven Upscayl core into a focused local studio.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="https://github.com/YazeKT/Rastercue/releases/latest">Download 1.0</a>
+            <a class="button button-quiet" href="https://github.com/YazeKT/Rastercue">View source</a>
+          </div>
+        </div>
+
+        <div class="calibration-board reveal" aria-label="Rastercue processing status illustration">
+          <div class="calibration-topline">
+            <span>ACTIVE JOB</span><span>UPSCALE / PASS 1</span>
+          </div>
+          <div class="calibration-stage">
+            <div class="crop-mark crop-mark-a"></div>
+            <div class="crop-mark crop-mark-b"></div>
+            <div class="pixel-field">
+              <div class="pixel-core"></div>
+            </div>
+            <p class="dimension dimension-x">2048 → 8192 PX</p>
+            <p class="dimension dimension-y">DEVICE 0</p>
+          </div>
+          <div class="calibration-readout">
+            <span><b>MODEL</b> Standard 4×</span>
+            <span><b>DEVICE</b> verified before processing</span>
+            <span><b>FILES</b> remain local</span>
+          </div>
+        </div>
+
+        <div class="hero-proof reveal" aria-label="Product commitments">
+          <div><span>01</span><strong>Original core preserved</strong><small>Protected command and model behaviour</small></div>
+          <div><span>02</span><strong>No silent fallback</strong><small>Device and backend stay visible</small></div>
+          <div><span>03</span><strong>Owner-tested on AMD</strong><small>Accepted on the RX 580 work PC</small></div>
+        </div>
+      </section>
+
+      <section id="studio" class="section studio-section section-compact" aria-labelledby="studio-title">
+        <div class="section-heading reveal">
+          <p class="section-label">The workstation</p>
+          <h2 id="studio-title">The image stays central.<br />The evidence stays close.</h2>
+          <p>Controls on the left. Inspection on the right. A large, undistorted preview between them.</p>
+        </div>
+        <figure class="product-frame reveal">
+          <div class="product-frame-bar">
+            <span>Rastercue workspace</span>
+            <span>Captured at 1350 × 689</span>
+          </div>
+          <img
+            src="./assets/workspace.png"
+            alt="Rastercue dark three-column workspace with image controls, a central preview and a right-side job panel"
+            width="1350"
+            height="689"
+          />
+          <figcaption>
+            Current application capture. Product images use their intrinsic aspect ratio and are never stretched to fill the frame.
+          </figcaption>
+        </figure>
+        <div class="product-gallery reveal" aria-label="Rastercue product views">
+          <figure><img src="./assets/history.png" alt="Rastercue job history with undistorted source and output thumbnails" width="1350" height="689" /><figcaption><b>History that shows the work.</b><span>Source and result thumbnails load from bounded local storage.</span></figcaption></figure>
+          <figure><img src="./assets/settings.png" alt="Rastercue settings with persistent side navigation and one scrollable content surface" width="1350" height="689" /><figcaption><b>Settings with a clear route.</b><span>The rail stays visible while the active section follows the scroll.</span></figcaption></figure>
+          <figure><img src="./assets/licences.png" alt="Rastercue licences window displaying complete scrollable licence text" width="1350" height="689" /><figcaption><b>Credits you can actually read.</b><span>Licences and notices remain accessible inside the app.</span></figcaption></figure>
+        </div>
+      </section>
+
+      <section class="section core-section section-compact" aria-labelledby="core-title">
+        <div class="core-statement reveal">
+          <p class="section-label">The non-negotiable</p>
+          <h2 id="core-title">A better studio around the processing that already works.</h2>
+        </div>
+        <div class="core-copy reveal">
+          <p>
+            Rastercue is an independently branded derivative of Upscayl. The established native Vulkan path,
+            model contracts and output behaviour form the protected baseline—not disposable scaffolding.
+          </p>
+          <p>
+            New compute choices sit beside that baseline and earn their place through regression tests, packaged
+            checks and explicit hardware evidence.
+          </p>
+          <a class="text-link" href="https://github.com/YazeKT/Rastercue/blob/main/docs/ENGINE-PROVENANCE.md">
+            Read engine provenance <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </section>
+
+      <section id="compute" class="section compute-section section-compact" aria-labelledby="compute-title">
+        <div class="section-heading reveal">
+          <p class="section-label">Hardware-aware compute</p>
+          <h2 id="compute-title">Detect first.<br />Recommend second.</h2>
+          <p>
+            Rastercue 1.0 distinguishes what Windows detects, what the engine can use and what actually completed
+            the job. Compatibility is measured on the machine—not inferred from a logo.
+          </p>
+        </div>
+        <div class="compute-map reveal">
+          <article class="compute-node is-proven">
+            <p class="node-state">Protected baseline</p>
+            <h3>Original Upscayl Vulkan</h3>
+            <p>Kept available as the protected compatibility path for established Upscayl processing.</p>
+          </article>
+          <div class="route" aria-hidden="true"><span></span></div>
+          <article class="compute-node">
+            <p class="node-state">Engine-probed</p>
+            <h3>Any probed Vulkan device</h3>
+            <p>No vendor whitelist. A device appears when the bundled engine can enumerate and probe it.</p>
+          </article>
+          <div class="route" aria-hidden="true"><span></span></div>
+          <article class="compute-node">
+            <p class="node-state">Native backend included</p>
+            <h3>CPU only</h3>
+            <p>Genuine NCNN CPU processing passed its no-Vulkan probe and packaged workflow test. Software Vulkan is never relabelled as CPU.</p>
+          </article>
+        </div>
+        <p class="evidence-note reveal">
+          <strong>Evidence boundary:</strong> a vendor name is never treated as proof. Compatibility and speed claims
+          require a successful packaged engine probe and a completed job on that device.
+        </p>
+      </section>
+
+      <section class="section model-section section-compact" aria-labelledby="model-title">
+        <div class="section-heading reveal">
+          <p class="section-label">Model library</p>
+          <h2 id="model-title">Choose by purpose.<br />Measure on your device.</h2>
+        </div>
+        <div class="model-layout">
+          <div class="model-card-stack reveal" aria-label="Example model library cards">
+            <article class="model-card selected">
+              <div><span class="model-icon" aria-hidden="true">S</span><span><b>Standard</b><small>General image enlargement</small></span></div>
+              <p>Recommended start</p>
+            </article>
+            <article class="model-card">
+              <div><span class="model-icon" aria-hidden="true">D</span><span><b>Digital Art</b><small>Illustration and clean edges</small></span></div>
+              <p>Available</p>
+            </article>
+            <article class="model-card">
+              <div><span class="model-icon" aria-hidden="true">N</span><span><b>Nomos8kSC</b><small>Detailed restoration candidate</small></span></div>
+              <p>Licence noted</p>
+            </article>
+          </div>
+          <div class="model-copy reveal">
+            <p>
+              Searchable categories, limitations, creator and licence details keep model choice grounded. Optional
+              benchmarks use a bundled non-user image and report measured results for the exact device, driver,
+              engine, model and settings.
+            </p>
+            <div class="benchmark-empty">
+              <span class="benchmark-line"></span>
+              <div><b>Not benchmarked on this device</b><small>No estimate is shown until a local measurement exists.</small></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="workflow" class="section workflow-section section-compact" aria-labelledby="workflow-title">
+        <div class="section-heading reveal">
+          <p class="section-label">Visible processing</p>
+          <h2 id="workflow-title">Know where the job is.<br />Know where it stopped.</h2>
+        </div>
+        <ol class="phase-list reveal">
+          <li><span>01</span><b>Validate input</b><small>Dimensions, format, memory and colour boundary</small></li>
+          <li><span>02</span><b>Select device</b><small>Chosen backend and actual device stay visible</small></li>
+          <li><span>03</span><b>Process</b><small>Model load, pass one and optional pass two</small></li>
+          <li><span>04</span><b>Encode & verify</b><small>Format, metadata, dimensions and readable output</small></li>
+          <li><span>05</span><b>Record</b><small>Thumbnail, history and optional archive</small></li>
+        </ol>
+      </section>
+
+      <section class="section archive-section section-compact" aria-labelledby="archive-title">
+        <div class="archive-visual reveal" aria-hidden="true">
+          <div class="archive-file back"><span>ORIGINAL</span><b>source.png</b><small>SHA-256 verified</small></div>
+          <div class="archive-file front"><span>OUTPUT</span><b>source-rastercue.png</b><small>Exact completed bytes</small></div>
+          <div class="archive-seal">.rastercue</div>
+        </div>
+        <div class="archive-copy reveal">
+          <p class="section-label">Restorable work</p>
+          <h2 id="archive-title">History for recall.<br />Archives for recovery.</h2>
+          <p>
+            History stays lightweight. When a job matters, an on-demand archive can preserve the exact original,
+            exact output, settings, checksums and thumbnails without lossy recompression.
+          </p>
+          <p class="small-copy">Archive restore validates paths, expanded size and checksums before writing into a user-selected location.</p>
+        </div>
+      </section>
+
+      <section id="evidence" class="section evidence-section section-compact" aria-labelledby="evidence-title">
+        <div class="section-heading reveal">
+          <p class="section-label">Truth before launch</p>
+          <h2 id="evidence-title">A claim is only ready<br />when the package proves it.</h2>
+        </div>
+        <div class="evidence-grid">
+          <article class="reveal"><span>Core</span><h3>Golden outputs</h3><p>Protected arguments, source hashes, decoded pixels, dimensions and cancellation.</p></article>
+          <article class="reveal"><span>Hardware</span><h3>Evidence, not logos</h3><p>AMD RX 580 owner-tested. Intel, NVIDIA and other devices remain engine-probe based.</p></article>
+          <article class="reveal"><span>Files</span><h3>Exact recovery</h3><p>Format validation, safe temporary work and checksum-verified archive restore.</p></article>
+          <article class="reveal"><span>Release</span><h3>Human approval</h3><p>Kirsten accepted the Windows app and product website on 24 September 2026.</p></article>
+        </div>
+      </section>
+
+      <section class="section privacy-section section-compact" aria-labelledby="privacy-title">
+        <div class="privacy-copy reveal">
+          <p class="section-label">Local by design</p>
+          <h2 id="privacy-title">Your image is not a diagnostic.</h2>
+          <p>
+            Processing stays on the machine. Diagnostic capture is local, bounded and reviewable. Images,
+            usernames, absolute paths and private filenames are excluded before a support bundle is shared manually.
+          </p>
+        </div>
+        <div class="privacy-stamp reveal" aria-label="No automatic upload">
+          <span>NO</span><strong>AUTO<br />UPLOAD</strong><small>Nothing is sent without your action.</small>
+        </div>
+      </section>
+
+      <section id="release-gate" class="section release-section" aria-labelledby="release-title">
+        <div class="release-card reveal">
+          <p class="section-label">Rastercue 1.0.0</p>
+          <h2 id="release-title">Built locally.<br />Released deliberately.</h2>
+          <p>
+            Rastercue 1.0 is the stable Windows foundation: owner-tested on the AMD work PC, released with source,
+            documentation and an honest boundary around unsigned binaries and probe-based hardware support.
+          </p>
+          <div class="release-actions">
+            <a class="button button-primary" href="https://github.com/YazeKT/Rastercue/releases/latest">Download Rastercue 1.0</a>
+            <a class="button button-quiet" href="https://github.com/YazeKT/Rastercue">View source</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand" href="#top"><img src="./assets/rastercue.svg" alt="" width="30" height="30" /><span>Rastercue</span></a>
+      <p>A local image-upscaling workspace by Yaze Media / YazeKT.</p>
+      <nav aria-label="Footer navigation">
+        <a href="https://github.com/YazeKT/Rastercue">Source</a>
+        <a href="https://github.com/YazeKT/Rastercue/issues">Issues</a>
+        <a href="mailto:kirstentrimaley@gmail.com">Support</a>
+        <a href="https://github.com/YazeKT/Rastercue/blob/main/PRIVACY.md">Privacy</a>
+        <a href="https://github.com/YazeKT/Rastercue/blob/main/THIRD-PARTY-NOTICES.md">Credits</a>
+      </nav>
+      <small>© <span data-year>2026</span> Yaze Media. Rastercue is based on Upscayl; attribution and licences remain in the source distribution.</small>
+    </footer>
+  </body>
+</html>

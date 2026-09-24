@@ -7,6 +7,7 @@ import {
 import { SEND_CHANNELS, INVOKE_CHANNELS, RECEIVE_CHANNELS } from './utils/security-policy';
 import { progressDelivery } from './utils/progress-delivery';
 import { ELECTRON_COMMANDS as C } from '../common/electron-commands';
+import { RastercueHardwareAPI } from '../common/hardware-types';
 
 const listeners = new Map<string, Map<(...args: any[]) => any, (...args: any[]) => any>>();
 const cleanup = new Map<(...args: any[]) => any, () => void>();
@@ -51,6 +52,7 @@ contextBridge.exposeInMainWorld("electron", {
 contextBridge.exposeInMainWorld('rastercue', {
   list: () => ipcRenderer.invoke('rastercue:list'),
   current: () => ipcRenderer.invoke('rastercue:current'),
+  getThumbnail: (jobId: string, fileId: string, kind: 'source' | 'output') => ipcRenderer.invoke('rastercue:getThumbnail', jobId, fileId, kind),
   setDesiredName: (name: string) => ipcRenderer.invoke('rastercue:setDesiredName', name),
   rename: (jobId: string, fileId: string, name: string) => ipcRenderer.invoke('rastercue:rename', jobId, fileId, name),
   open: (jobId: string, fileId: string) => ipcRenderer.invoke('rastercue:open', jobId, fileId),
@@ -58,6 +60,9 @@ contextBridge.exposeInMainWorld('rastercue', {
   openLogs: () => ipcRenderer.invoke('rastercue:openLogs'),
   relocate: () => ipcRenderer.invoke('rastercue:relocate'),
   clear: (confirmed: boolean) => ipcRenderer.invoke('rastercue:clear', confirmed),
+  archive: (jobId: string) => ipcRenderer.invoke('rastercue:archive', jobId),
+  restoreArchive: () => ipcRenderer.invoke('rastercue:restoreArchive'),
+  createSupportBundle: (jobId?: string) => ipcRenderer.invoke('rastercue:createSupportBundle', jobId),
   onChanged: (callback: (snapshot: unknown) => void) => {
     const listener = (_event: unknown, snapshot: unknown) => callback(snapshot);
     ipcRenderer.on('rastercue:changed', listener);
@@ -67,3 +72,10 @@ contextBridge.exposeInMainWorld('rastercue', {
 contextBridge.exposeInMainWorld('rastercueUpdates', {
   check: () => ipcRenderer.invoke('rastercue-updates:check'),
 });
+
+const rastercueHardware: RastercueHardwareAPI = {
+  detect: options => ipcRenderer.invoke('rastercue-hardware:detect', options),
+  software: options => ipcRenderer.invoke('rastercue-hardware:software', options),
+  selectBackend: backendId => ipcRenderer.invoke('rastercue-hardware:select-backend', backendId),
+};
+contextBridge.exposeInMainWorld('rastercueHardware', rastercueHardware);

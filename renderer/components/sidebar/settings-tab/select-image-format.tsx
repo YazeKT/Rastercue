@@ -48,6 +48,20 @@ export function SelectImageFormat({
           >
             {t("SETTINGS.IMAGE_FORMAT.WEBP")}
           </button>
+          <button
+            className={`btn ${saveImageAs === "avif" && "btn-primary"}`}
+            onClick={() => setExportType("avif")}
+            title="High-quality compact export through a bounded PNG working image"
+          >
+            AVIF
+          </button>
+          <button
+            className={`btn ${saveImageAs === "tiff" && "btn-primary"}`}
+            onClick={() => setExportType("tiff")}
+            title="Single-page RGB/sRGB TIFF export"
+          >
+            TIFF
+          </button>
         </div>
       </div>
     </div>

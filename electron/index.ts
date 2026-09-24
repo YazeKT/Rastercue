@@ -24,6 +24,7 @@ import pasteImage from "./commands/paste-image";
 import path from "path";
 import fs from "fs";
 import { builtInModelAvailability } from './utils/model-availability';
+import { registerRastercueHardware } from './rastercue-hardware';
 
 // INITIALIZATION
 app.setName('Rastercue');
@@ -119,6 +120,8 @@ const handleTrusted = (channel: string, handler: (...args: any[]) => any) => ipc
   if (!trustedRequest(event)) throw new Error('Untrusted application request.');
   return handler(event, ...args);
 });
+
+registerRastercueHardware(trustedRequest);
 
 onTrusted(ELECTRON_COMMANDS.STOP, stop);
 handleTrusted('rastercue-models:bundled-folder', () => modelsPath);

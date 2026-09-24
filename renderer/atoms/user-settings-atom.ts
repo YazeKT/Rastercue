@@ -1,5 +1,6 @@
 import { ImageFormat } from "@/lib/valid-formats";
 import { ModelId } from "@common/models-list";
+import type { ComputeBackendId } from "@common/hardware-types";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
@@ -14,6 +15,10 @@ export const selectedModelIdAtom = atomWithStorage<ModelId | string>(
 );
 export const doubleUpscaylAtom = atomWithStorage("doubleUpscayl", false);
 export const gpuIdAtom = atomWithStorage("gpuId", "");
+export const computeBackendAtom = atomWithStorage<ComputeBackendId>(
+  "computeBackend",
+  "original-vulkan",
+);
 export const saveImageAsAtom = atomWithStorage<ImageFormat>(
   "saveImageAs",
   "jpg",

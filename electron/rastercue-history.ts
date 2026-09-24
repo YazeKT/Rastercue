@@ -6,8 +6,11 @@ import { randomUUID } from "crypto";
 import { pathToFileURL } from "url";
 import { ELECTRON_COMMANDS as C } from "../common/electron-commands";
 import { HistoryFile, HistoryFileInfo, HistorySnapshot, RastercueJob, JobSettings } from "../common/rastercue-types";
+import { getComputeBackend } from "./utils/spawn-upscayl";
+import { chooseAndCreateArchive, chooseAndRestoreArchive } from "./rastercue-archive";
+import { createSupportBundle } from "./rastercue-support";
 
-const IMAGE = /\.(png|jpe?g|jfif|webp)$/i;
+const IMAGE = /\.(png|jpe?g|jfif|webp|avif|tiff?)$/i;
 const decode = (value: string) => path.resolve(decodeURIComponent(value));
 export function validateOutputName(name: unknown): string {
   if (typeof name !== "string") throw new Error("Enter an output filename.");
@@ -50,7 +53,14 @@ export function registerRastercueHistory(win: BrowserWindow): void {
     }
     if (loaded) records.forEach(r => {
       if (r.status === "running") { r.status = "interrupted"; r.endedAt = new Date().toISOString(); r.durationMs = Date.now() - Date.parse(r.startedAt); r.warnings.push("Application closed before a completion event was received."); }
-      r.files.forEach(f => { const thumbnailPath = path.join(folder, "thumbnails", `${r.id}-${f.id}.png`); f.thumbnail = fs.existsSync(thumbnailPath) ? pathToFileURL(thumbnailPath).href : undefined; });
+      r.files.forEach(f => {
+        const legacy = path.join(folder, "thumbnails", `${r.id}-${f.id}.png`);
+        const source = path.join(folder, "thumbnails", `${r.id}-${f.id}-source.png`);
+        const output = path.join(folder, "thumbnails", `${r.id}-${f.id}-output.png`);
+        f.thumbnail = fs.existsSync(legacy) ? pathToFileURL(legacy).href : undefined;
+        f.sourceThumbnail = fs.existsSync(source) ? pathToFileURL(source).href : undefined;
+        f.outputThumbnail = fs.existsSync(output) ? pathToFileURL(output).href : f.thumbnail;
+      });
     });
   } catch (error) { persistenceError = `History unavailable: ${String(error)}`; }
 
@@ -97,13 +107,19 @@ export function registerRastercueHistory(win: BrowserWindow): void {
     try {
       const thumbnailFolder = path.join(folder, "thumbnails");
       await fs.promises.mkdir(thumbnailFolder, { recursive: true });
-      const target = path.join(thumbnailFolder, `${job.id}-${file.id}.png`);
-      await sharp(file.output?.path || file.source.path).resize({ width: 144, height: 144, fit: 'inside', withoutEnlargement: true }).png().toFile(target);
-      file.thumbnail = pathToFileURL(target).href;
+      const sourceTarget = path.join(thumbnailFolder, `${job.id}-${file.id}-source.png`);
+      await sharp(file.source.path).resize({ width: 192, height: 192, fit: 'inside', withoutEnlargement: true }).png().toFile(sourceTarget);
+      file.sourceThumbnail = pathToFileURL(sourceTarget).href;
+      if (file.output?.path) {
+        const outputTarget = path.join(thumbnailFolder, `${job.id}-${file.id}-output.png`);
+        await sharp(file.output.path).resize({ width: 192, height: 192, fit: 'inside', withoutEnlargement: true }).png().toFile(outputTarget);
+        file.outputThumbnail = pathToFileURL(outputTarget).href;
+        file.thumbnail = file.outputThumbnail;
+      } else file.thumbnail = file.sourceThumbnail;
     } catch { /* Thumbnail failure never makes processing fail. */ }
   }
-  async function renameOutput(job: RastercueJob, file: HistoryFile, rawName: string) {
-    if (job.status !== "completed" || !file.output) throw new Error("Only a completed, managed output can be renamed.");
+  async function renameOutput(job: RastercueJob, file: HistoryFile, rawName: string, duringCompletion = false) {
+    if ((job.status !== "completed" && !(duringCompletion && job.status === "running")) || !file.output) throw new Error("Only a completed, managed output can be renamed.");
     const output = file.output.path;
     const stat = await fs.promises.lstat(output);
     if (!stat.isFile() || stat.isSymbolicLink()) throw new Error("The managed output is missing or is a symbolic link.");
@@ -130,6 +146,7 @@ export function registerRastercueHistory(win: BrowserWindow): void {
     try { source = decode(kind === "batch" ? payload.batchFolderPath : payload.imagePath); destination = decode(payload.outputPath); } catch { return; }
     const settings: JobSettings = {};
     for (const [key, value] of Object.entries(payload)) if (value === null || ["string", "number", "boolean"].includes(typeof value)) settings[key] = value as JobSettings[string];
+    settings.backendId = getComputeBackend();
     const job: RastercueJob = { id: randomUUID(), kind, status: "running", startedAt: new Date().toISOString(), model: String(payload.model), scale: String(payload.scale), destination, settings, files: [], warnings: [], progress: "Starting…", desiredName: kind === "single" ? desiredName || undefined : undefined };
     desiredName = ""; active = job; finishing = false; records.unshift(job);
     pendingDetails = (async () => {
@@ -145,7 +162,7 @@ export function registerRastercueHistory(win: BrowserWindow): void {
   }
   async function complete(job: RastercueJob, outputPath: string) {
     await pendingDetails;
-    job.status = "completed"; job.endedAt = new Date().toISOString(); job.durationMs = Date.now() - Date.parse(job.startedAt); job.progress = "Completed";
+    job.progress = "Verifying output…";
     const output = path.resolve(outputPath);
     if (job.kind === "batch") {
       job.destination = output;
@@ -160,11 +177,14 @@ export function registerRastercueHistory(win: BrowserWindow): void {
       if (path.dirname(output) === job.destination && output !== job.files[0].source.path) job.files[0].output = await info(output);
       else job.warnings.push("Completion path was outside the managed destination; it was not registered for renaming.");
       if (job.desiredName && job.files[0].output) {
-        try { await renameOutput(job, job.files[0], job.desiredName); }
+        try { await renameOutput(job, job.files[0], job.desiredName, true); }
         catch (error) { job.warnings.push(`Output completed, but renaming failed: ${String(error)}. The original output is preserved; retry from History.`); }
       }
     }
+    const validOutputs = job.files.filter(file => file.output && !file.output.missing && file.output.width && file.output.height);
+    if (!validOutputs.length || (job.kind !== "batch" && validOutputs.length !== job.files.length)) throw new Error("The engine completion event did not contain a readable verified output.");
     for (const file of job.files) await thumbnail(job, file);
+    job.status = "completed"; job.endedAt = new Date().toISOString(); job.durationMs = Date.now() - Date.parse(job.startedAt); job.progress = "Completed";
     await persist(); if (active === job) active = null; finishing = false; finalising = false; notify();
   }
   function observe(channel: string, payload: any) {
@@ -172,7 +192,7 @@ export function registerRastercueHistory(win: BrowserWindow): void {
     if (!job || job.status !== "running") return;
     if ([C.UPSCAYL_DONE, C.DOUBLE_UPSCAYL_DONE, C.FOLDER_UPSCAYL_DONE].includes(channel as any) && typeof payload === "string" && !finishing) {
       finishing = true; finalising = true;
-      void complete(job, payload).catch(error => { job.warnings.push(`History completion failed: ${String(error)}`); job.status = "completed"; active = null; finishing = false; finalising = false; void persist(); notify(); });
+      void complete(job, payload).catch(error => { job.warnings.push(`Output verification failed: ${String(error)}`); job.status = "failed"; job.progress = "Failed during output verification"; job.endedAt = new Date().toISOString(); job.durationMs = Date.now() - Date.parse(job.startedAt); active = null; finishing = false; finalising = false; void persist(); notify(); });
     } else if (channel === C.UPSCAYL_ERROR) {
       job.status = "failed"; job.progress = "Failed"; job.endedAt = new Date().toISOString(); job.durationMs = Date.now() - Date.parse(job.startedAt); job.warnings.push(String(payload)); active = null; void persist(); notify();
     } else if ([C.UPSCAYL_WARNING, C.METADATA_ERROR].includes(channel as any)) { job.warnings.push(String(payload)); void persist(); notify(); }
@@ -206,11 +226,39 @@ export function registerRastercueHistory(win: BrowserWindow): void {
     return snapshot();
   });
   handle("current", () => active || records[0] || null);
+  handle("getThumbnail", async (jobId: string, fileId: string, kind: "source" | "output") => {
+    owned(jobId, fileId);
+    if (kind !== "source" && kind !== "output") throw new Error("Unsupported thumbnail kind.");
+    const thumbnailFolder = path.join(folder, "thumbnails");
+    const exact = path.join(thumbnailFolder, `${jobId}-${fileId}-${kind}.png`);
+    const legacy = path.join(thumbnailFolder, `${jobId}-${fileId}.png`);
+    const target = fs.existsSync(exact) ? exact : fs.existsSync(legacy) ? legacy : null;
+    if (!target) return null;
+    const relative = path.relative(thumbnailFolder, target);
+    if (relative.startsWith("..") || path.isAbsolute(relative)) throw new Error("Thumbnail is outside managed history storage.");
+    const stat = await fs.promises.lstat(target);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 2 * 1024 * 1024) throw new Error("Managed thumbnail is invalid.");
+    const bytes = await fs.promises.readFile(target);
+    return `data:image/png;base64,${bytes.toString("base64")}`;
+  });
   handle("setDesiredName", (name: string) => { desiredName = name.trim() ? validateOutputName(name) : ""; });
   handle("rename", async (jobId: string, fileId: string, name: string) => { const { job, file } = owned(jobId, fileId); await renameOutput(job, file!, name); await persist(); notify(); return snapshot(); });
   handle("open", async (jobId: string, fileId: string) => { const { file } = owned(jobId, fileId); if (!file?.output || !fs.existsSync(file.output.path)) throw new Error("Output file is missing."); const error = await shell.openPath(file.output.path); if (error) throw new Error(error); });
   handle("openFolder", async (jobId?: string) => { const target = jobId ? owned(jobId).job.destination : folder; const error = await shell.openPath(target); if (error) throw new Error(error); });
   handle("openLogs", async () => { const error = await shell.openPath(app.getPath('logs')); if (error) throw new Error(error); });
+  handle("archive", async (jobId: string) => {
+    if (isRastercueJobActive() || finishing) throw new Error("Wait for the current job before creating an archive.");
+    const { job } = owned(jobId);
+    const result = await chooseAndCreateArchive(win, job);
+    if (result) { job.archivePath = result.path; await persist(); notify(); }
+    return snapshot();
+  });
+  handle("restoreArchive", async () => {
+    if (isRastercueJobActive() || finishing) throw new Error("Wait for the current job before restoring an archive.");
+    const result = await chooseAndRestoreArchive(win);
+    return result ? { restored: result.restored } : null;
+  });
+  handle("createSupportBundle", async (jobId?: string) => createSupportBundle(win, jobId ? owned(jobId).job : active || records[0] || undefined));
   handle("relocate", async () => {
     if (isRastercueJobActive() || finishing) throw new Error("Wait for the current job before moving history.");
     const selected = await dialog.showOpenDialog(win, { title: "Choose a parent folder for Rastercue history", properties: ["openDirectory", "createDirectory"] });
@@ -225,8 +273,16 @@ export function registerRastercueHistory(win: BrowserWindow): void {
       for (const name of ["history.json", "history.backup.json"]) if (fs.existsSync(path.join(sourceFolder, name))) await fs.promises.copyFile(path.join(sourceFolder, name), path.join(target, name));
       await fs.promises.mkdir(path.join(target, "thumbnails"));
       for (const job of records) for (const file of job.files) {
-        const filename = `${job.id}-${file.id}.png`;
-        if (fs.existsSync(path.join(sourceFolder, "thumbnails", filename))) { await fs.promises.copyFile(path.join(sourceFolder, "thumbnails", filename), path.join(target, "thumbnails", filename)); relocatedThumbnails.push({ file, thumbnail: pathToFileURL(path.join(target, "thumbnails", filename)).href }); }
+        for (const suffix of ["", "-source", "-output"]) {
+          const filename = `${job.id}-${file.id}${suffix}.png`;
+          if (fs.existsSync(path.join(sourceFolder, "thumbnails", filename))) {
+            await fs.promises.copyFile(path.join(sourceFolder, "thumbnails", filename), path.join(target, "thumbnails", filename));
+            const uri = pathToFileURL(path.join(target, "thumbnails", filename)).href;
+            if (suffix === "-source") file.sourceThumbnail = uri;
+            else if (suffix === "-output") file.outputThumbnail = uri;
+            else relocatedThumbnails.push({ file, thumbnail: uri });
+          }
+        }
       }
       const temporary = pointer + ".tmp";
       await fs.promises.writeFile(temporary, JSON.stringify({ folder: target })); await fs.promises.rename(temporary, pointer);
@@ -241,7 +297,7 @@ export function registerRastercueHistory(win: BrowserWindow): void {
     if (persistenceError) { records = previous; throw new Error(persistenceError); }
     // Replace backup too: deleted records must not reappear during recovery.
     await fs.promises.copyFile(path.join(folder, "history.json"), path.join(folder, "history.backup.json"));
-    for (const job of previous) for (const file of job.files) if (/^[a-f0-9-]+$/.test(job.id) && /^[a-f0-9-]+$/.test(file.id)) await fs.promises.unlink(path.join(folder, "thumbnails", `${job.id}-${file.id}.png`)).catch(() => undefined);
+    for (const job of previous) for (const file of job.files) if (/^[a-f0-9-]+$/.test(job.id) && /^[a-f0-9-]+$/.test(file.id)) for (const suffix of ["", "-source", "-output"]) await fs.promises.unlink(path.join(folder, "thumbnails", `${job.id}-${file.id}${suffix}.png`)).catch(() => undefined);
     notify(); return snapshot();
   });
 }

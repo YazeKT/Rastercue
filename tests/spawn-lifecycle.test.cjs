@@ -14,9 +14,9 @@ function load(prepare, spawn) {
   }).outputText;
   const exports = {};
   const stubs = {
-    child_process:{spawn,ChildProcess}, stream:{PassThrough}, path,
+    child_process:{spawn,ChildProcess}, stream:{PassThrough}, path, fs,
     './get-resource-paths':{execPath:'original-engine'},
-    './prepare-jpeg-input':{prepareJpegInput:prepare},
+    './prepare-engine-io':{prepareEngineIO:prepare},
   };
   vm.runInNewContext(code,{exports,require:id=>stubs[id]}, {filename});
   return exports.spawnUpscayl;
@@ -118,7 +118,9 @@ test('nonzero native exit is an error before legacy close handlers can infer suc
     job.process.on('error',error=>events.push(['error',error.message]));
     job.process.on('close',code=>events.push(['close',code]));
     await new Promise(resolve=>setImmediate(resolve));
+    const closed=new Promise(resolve=>job.process.once('close',resolve));
     native.emit('close',3221225477,null);
+    await closed;
     assert.equal(events[0][0],'error');assert.match(events[0][1],/exited unsuccessfully/);
     assert.deepEqual(events[1],['close',3221225477]);
   }

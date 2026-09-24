@@ -3,6 +3,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import RastercueLogo from '../icons/rastercue-logo';
 import LanguageSwitcher from '../sidebar/settings-tab/language-switcher';
 import SelectTheme from '../sidebar/settings-tab/select-theme';
+import { useAtom } from 'jotai';
+import { computeBackendAtom, gpuIdAtom } from '@/atoms/user-settings-atom';
+import type { HardwareSnapshot } from '@common/hardware-types';
 
 const completionKey = 'rastercueGettingStarted.v1';
 const steps = [
@@ -15,11 +18,16 @@ const steps = [
 export function OnboardingDialog() {
   const [open,setOpen]=useState(false);
   const [step,setStep]=useState(0);
+  const [hardware,setHardware]=useState<HardwareSnapshot|null>(null);
+  const [hardwareError,setHardwareError]=useState('');
+  const [,setGpuId]=useAtom(gpuIdAtom);
+  const [,setBackendId]=useAtom(computeBackendAtom);
   useEffect(()=>{
     // Preserve the original welcome acknowledgement; version the new guided tour independently.
     try { setOpen(localStorage.getItem(completionKey)!=='completed'); } catch { setOpen(true); }
     const replay=()=>{setStep(0);setOpen(true);};
     window.addEventListener('rastercue:show-guide',replay);
+    window.rastercueHardware?.detect().then(setHardware).catch(error=>setHardwareError(String(error)));
     return()=>window.removeEventListener('rastercue:show-guide',replay);
   },[]);
   const finish=()=>{
@@ -31,7 +39,7 @@ export function OnboardingDialog() {
     <DialogHeader><div className="flex items-center gap-3"><RastercueLogo className="w-10 h-10 text-primary"/><span className="text-xs uppercase tracking-widest opacity-70">Getting started · {step+1} of {steps.length}</span></div><DialogTitle>{title}</DialogTitle><DialogDescription>{description}</DialogDescription></DialogHeader>
     <ol className="flex gap-2" aria-label="Guide progress">{steps.map(([label],index)=><li key={label} className={`h-1.5 flex-1 rounded ${index<=step?'bg-primary':'bg-base-content/20'}`} aria-current={index===step?'step':undefined}><span className="sr-only">{label}</span></li>)}</ol>
     <p className="rounded-lg border border-primary/30 bg-base-200 p-4 text-sm">{example}</p>
-    {step===0?<div className="grid gap-4 sm:grid-cols-2"><LanguageSwitcher/><SelectTheme/></div>:null}
+    {step===0?<div className="space-y-4"><div className="rounded-xl border border-primary/30 bg-primary/10 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold">Hardware recommendation</h3><p className="mt-1 text-sm opacity-75">{hardware?.recommendation.reason || (hardwareError || 'Detecting local hardware and testing available compute backends…')}</p></div>{hardware?.recommendation.backendId?<button className="btn btn-sm btn-primary" onClick={()=>{setBackendId(hardware.recommendation.backendId || 'original-vulkan');setGpuId(hardware.recommendation.deviceId || '');}}>Apply recommendation</button>:null}</div>{hardware?<p className="mt-3 text-xs opacity-65">Detected: {hardware.displayAdapters.map(adapter=>adapter.name).join(', ') || 'No display adapter reported'} · {hardware.cpu.model} · {(hardware.memory.totalBytes/1024**3).toFixed(0)} GB RAM. Detection does not equal compute compatibility; only locally probed backends are marked available.</p>:null}</div><div className="grid gap-4 sm:grid-cols-2"><LanguageSwitcher/><SelectTheme/></div></div>:null}
     <p className="text-xs opacity-75">Images and history remain local. No telemetry or automatic image uploads. Disable GitHub update checks in Support for offline work.</p>
     <div className="flex flex-wrap items-center justify-between gap-3"><button className="btn btn-sm btn-ghost" onClick={finish}>Skip guide</button><div className="flex gap-2"><button className="btn btn-sm" disabled={step===0} onClick={()=>setStep(previous=>previous-1)}>Back</button>{step===steps.length-1?<button className="btn btn-sm btn-primary" onClick={finish}>Open workspace</button>:<button className="btn btn-sm btn-primary" onClick={()=>setStep(previous=>previous+1)}>Next</button>}</div></div>
   </DialogContent></Dialog>;

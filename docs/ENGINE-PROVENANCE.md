@@ -30,3 +30,11 @@ Rastercue excludes both inherited OpenMP DLLs from public packages rather than a
 The complete source archive also includes recursive NCNN submodules: glslang 4afd69177258d0636f78d2c4efb823ab6382a187 and pybind11 70a58c577eaf067748c2ec31bfd0b0a614cffba6. `.git` metadata is excluded, not source/build scripts/notices.
 
 This audit establishes Windows engine identity only; do not infer verified native provenance or runtime execution for macOS/Linux from it.
+
+## Rastercue NCNN CPU sidecar
+
+Rastercue 1.0 adds a separate Windows x64 CPU-only executable; it does not replace or modify the protected Upscayl Vulkan binary. The sidecar loads the same NCNN `.param`/`.bin` model pairs directly and reports a machine-readable contract with `backend: cpu`, `runtime: ncnn`, and `vulkan: false` before the app enables CPU selection.
+
+Its source and reproducible build are in `native/rastercue-cpu` and `scripts/build-rastercue-cpu.ps1`. The build pins NCNN at `6125c9f47cd14b589de0521350668cf9d3d37e3c` and libwebp at `8ea81561d2fdd382da60f57958741a7c23a18eb6`, configures `NCNN_VULKAN=OFF`, and stages the probed executable separately as `rastercue-cpu.exe`. The CPU tiling path is adapted from nihui/realsr-ncnn-vulkan commit `b7f890ee2704ccea76c73d9fd4d5b3298dd1beca`; its MIT notice is retained in `native/rastercue-cpu/NIHUI-REALSRCNN-MIT.txt`.
+
+The release corresponding-source archive includes the modified CPU source, its pinned NCNN/libwebp dependency source, build files and notices as well as the protected Vulkan engine source. CPU TTA is rejected explicitly in 1.0 because that route has not passed the output regression matrix; the app never silently changes backend or drops TTA.

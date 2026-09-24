@@ -1,6 +1,6 @@
 # Security policy
 
-Rastercue is a local desktop application. The Windows beta is unsigned, not independently audited or fully sandboxed. Process trusted images and creator-authorized models. History, thumbnails and logs can be sensitive.
+Rastercue is a local desktop application. The Windows 10/11 x64 stable release is unsigned, not independently audited or fully sandboxed. Process trusted images and creator-authorized models. History, thumbnails and logs can be sensitive.
 
 ## Known inherited limitations
 
@@ -12,7 +12,7 @@ History thumbnails/paths and logs may be sensitive. Files are local; no telemetr
 
 The initial publication reported 23 production-classified advisories. A separate security pass updated Electron, builder, updater, Sharp, metadata tooling and patched build dependencies. Next remains on its existing major; a scoped PostCSS override removes its vulnerable nested dependency. On 18 September 2026 the refreshed lockfile reported zero known advisories in both full and production npm audits. This is a point-in-time registry result, not proof that vulnerabilities do not exist. Repeat audits and packaged regressions for every release. Native engine bytes, protected handlers and model IDs remain unchanged.
 
-Unsigned Windows assets lack publisher authenticity verification. Checksums detect changes but are not signatures. Hosted older-version update installation has not been verified. Disable updates if this does not meet deployment requirements. Microsoft runtimes are external prerequisites obtained directly from Microsoft, not redistributed. Windows testing does not verify macOS/Linux.
+Unsigned Windows assets lack publisher authenticity verification. Checksums detect changes but are not signatures. GitHub-hosted update installation must still be verified after the first stable artifacts are public; disable updates if this does not meet deployment requirements. Microsoft runtimes are external prerequisites obtained directly from Microsoft, not redistributed. AMD RX 580 Vulkan owner testing does not certify other GPUs, and Windows testing does not verify macOS/Linux binaries.
 
 ## Reporting
 

@@ -28,7 +28,7 @@ vm.runInThisContext(`(function(require,module,exports){${ts.transpileModule(comm
 const C = commandModule.exports.ELECTRON_COMMANDS;
 const mod = { exports: {} };
 const imageReader = () => ({ metadata: async () => ({ width: 10, height: 20 }), resize() { return this; }, png() { return this; }, toFile: async target => fs.promises.writeFile(target, 'thumbnail') });
-vm.runInThisContext(`(function(require,module,exports){${js}\n})`)(id => id === 'electron' ? electron : id === 'sharp' ? imageReader : id === '../common/electron-commands' ? commandModule.exports : require(id), mod, mod.exports);
+vm.runInThisContext(`(function(require,module,exports){${js}\n})`)(id => id === 'electron' ? electron : id === 'sharp' ? imageReader : id === '../common/electron-commands' ? commandModule.exports : id === './utils/spawn-upscayl' ? { getComputeBackend: () => 'original-vulkan' } : id === './rastercue-archive' ? { chooseAndCreateArchive: async () => null, chooseAndRestoreArchive: async () => null } : id === './rastercue-support' ? { createSupportBundle: async () => null } : require(id), mod, mod.exports);
 const api = (name, ...args) => handlers.get(`rastercue:${name}`)(event, ...args);
 const sleep = () => new Promise(resolve => setTimeout(resolve, 20));
 async function settled() {
@@ -57,6 +57,9 @@ async function settled() {
   assert.equal(sent.find(args => args[0] === C.UPSCAYL_DONE)[1], output, 'Original completion payload stays unchanged');
   assert.equal(file.output.path, path.join(root, 'campaign.jpg'));
   assert.equal(file.source.bytes, 14); assert.equal(file.output.bytes, 20);
+  assert.equal(await api('getThumbnail', job.id, file.id, 'source'), `data:image/png;base64,${Buffer.from('thumbnail').toString('base64')}`);
+  assert.equal(await api('getThumbnail', job.id, file.id, 'output'), `data:image/png;base64,${Buffer.from('thumbnail').toString('base64')}`);
+  await assert.rejects(api('getThumbnail', job.id, file.id, 'invalid'), /Unsupported thumbnail kind/);
   assert.equal(fs.readFileSync(input, 'utf8'), 'original image');
   fs.writeFileSync(path.join(root, 'collision.jpg'), 'existing');
   await assert.rejects(api('rename', job.id, file.id, 'collision'), /EEXIST/);
@@ -104,11 +107,11 @@ async function settled() {
   fs.writeFileSync(path.join(state.folder, 'history.backup.json'), JSON.stringify(recovered));
   fs.writeFileSync(path.join(state.folder, 'history.json'), '{broken json');
   const reloadedModule = { exports: {} };
-  vm.runInThisContext(`(function(require,module,exports){${js}\n})`)(id => id === 'electron' ? electron : id === 'sharp' ? imageReader : id === '../common/electron-commands' ? commandModule.exports : require(id), reloadedModule, reloadedModule.exports);
+  vm.runInThisContext(`(function(require,module,exports){${js}\n})`)(id => id === 'electron' ? electron : id === 'sharp' ? imageReader : id === '../common/electron-commands' ? commandModule.exports : id === './utils/spawn-upscayl' ? { getComputeBackend: () => 'original-vulkan' } : id === './rastercue-archive' ? { chooseAndCreateArchive: async () => null, chooseAndRestoreArchive: async () => null } : id === './rastercue-support' ? { createSupportBundle: async () => null } : require(id), reloadedModule, reloadedModule.exports);
   reloadedModule.exports.registerRastercueHistory(win);
   state = await api('list');
   assert.equal(state.records[0].status, 'interrupted', 'A recovered in-progress job must not be inferred successful');
-  assert.ok(!state.records[0].files[0].thumbnail.startsWith('https:'), 'Only local thumbnail URLs are restored');
+  assert.ok(!state.records[0].files[0].thumbnail || !state.records[0].files[0].thumbnail.startsWith('https:'), 'Only local thumbnail URLs are restored');
   fs.unlinkSync(path.join(root, 'approved.jpg'));
   console.log('PASS Rastercue history: unchanged payloads, sizes, staged naming, ownership, collisions, invalid names, persistence/backup, clear safety, failure, cancellation, batch files/rename, relocation, backup recovery, crash interruption, local thumbnails.');
 })().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => {

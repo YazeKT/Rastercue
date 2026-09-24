@@ -1,9 +1,11 @@
 import { MessageBoxOptions, app, dialog } from "electron";
+import path from "path";
 import { getMainWindow } from "../main-window";
 import { savedImagePath, setSavedImagePath } from "../utils/config-variables";
 import logit from "../utils/logit";
 import settings from "electron-settings";
 import { FEATURE_FLAGS } from "../../common/feature-flags";
+import { IMPORT_EXTENSIONS, isSupportedImport } from "../../common/format-capabilities";
 
 const selectFile = async () => {
   const mainWindow = getMainWindow();
@@ -17,18 +19,7 @@ const selectFile = async () => {
     filters: [
       {
         name: "Images",
-        extensions: [
-          "png",
-          "jpg",
-          "jpeg",
-          "jfif",
-          "webp",
-          "PNG",
-          "JPG",
-          "JPEG",
-          "JFIF",
-          "WEBP",
-        ],
+        extensions: [...IMPORT_EXTENSIONS, ...IMPORT_EXTENSIONS.map(extension => extension.toUpperCase())],
       },
     ],
   });
@@ -48,18 +39,7 @@ const selectFile = async () => {
     // READ SELECTED FILES
     filePaths.forEach((file) => {
       // log.log("Files in Folder: ", file);
-      if (
-        file.endsWith(".png") ||
-        file.endsWith(".jpg") ||
-        file.endsWith(".jpeg") ||
-        file.endsWith(".jfif") ||
-        file.endsWith(".webp") ||
-        file.endsWith(".JPG") ||
-        file.endsWith(".PNG") ||
-        file.endsWith(".JPEG") ||
-        file.endsWith(".JFIF") ||
-        file.endsWith(".WEBP")
-      ) {
+      if (isSupportedImport(path.extname(file))) {
         isValid = true;
       }
     });
@@ -70,7 +50,7 @@ const selectFile = async () => {
         type: "error",
         title: "Invalid File",
         message:
-          "The selected file is not a valid image. Make sure you select a '.png', '.jpg', or '.webp' file.",
+          "Choose a supported single-image PNG, JPEG, WebP, AVIF, or single-page TIFF file.",
       };
       if (!mainWindow) return null;
       dialog.showMessageBoxSync(mainWindow, options);

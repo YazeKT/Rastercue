@@ -1,7 +1,7 @@
 {
   "name": "rastercue",
   "private": true,
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0",
   "productName": "Rastercue",
   "author": {
     "name": "Yaze Media / YazeKT",
@@ -38,7 +38,11 @@
     "assets:fetch": "node scripts/fetch-upstream-assets.cjs",
     "release:notices": "node scripts/prepare-release-notices.cjs",
     "release:models": "node scripts/prepare-bundled-models.cjs",
+    "release:local-candidate": "node scripts/prepare-local-candidate.cjs",
+    "build:cpu:win": "powershell -ExecutionPolicy Bypass -File scripts/build-rastercue-cpu.ps1",
     "test:history": "node scripts/test-rastercue-history.cjs",
+    "test:studio": "node --test tests/studio-foundation.test.cjs tests/rastercue-archive.test.cjs tests/format-adapter.test.cjs",
+    "test:cpu": "node --test tests/cpu-backend.test.cjs",
     "test:rastercue": "node --test tests/rastercue.test.cjs tests/jpeg-input.test.cjs tests/spawn-lifecycle.test.cjs tests/security-policy.test.cjs",
     "clean": "rimraf dist renderer/.next renderer/out",
     "start": "tsc && electron .",
@@ -110,7 +114,12 @@
       {
         "from": "resources/release-models",
         "to": "resources/models",
-        "filter": ["*.bin", "*.param"]
+        "filter": [
+          "*.bin",
+          "*.param",
+          "!realesr-animevideov3-x2.*",
+          "!realesr-animevideov3-x3.*"
+        ]
       },
       {
         "from": "resources/release-models/CC-BY-4.0.txt",
@@ -276,6 +285,7 @@
     "@radix-ui/react-scroll-area": "^1.2.2",
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-toast": "^1.2.4",
+    "archiver": "^7.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
@@ -299,7 +309,8 @@
     "tailwind-merge": "^2.6.0",
     "tailwind-scrollbar": "^3.1.0",
     "tailwindcss-animate": "^1.0.7",
-    "theme-change": "^2.5.0"
+    "theme-change": "^2.5.0",
+    "yauzl": "3.4.0"
   },
   "overrides": {
     "postcss": "$postcss"

@@ -1,45 +1,55 @@
 import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 import { desiredOutputNameAtom, rastercueJobAtom } from "@/atoms/rastercue-job-atom";
+import InfoPopover from "@/components/ui/info-popover";
+import ThumbnailImage from "./thumbnail-image";
 
 export const readableBytes = (bytes: number | null | undefined) => bytes == null ? "Not available yet" : bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+const basename = (path?: string) => path?.split(/[\\/]/).pop() || "Image";
+const extension = (path?: string) => path?.split(".").pop()?.toUpperCase() || "Unknown";
+const dimensions = (width?: number | null, height?: number | null) => width && height ? `${width.toLocaleString()} × ${height.toLocaleString()} px` : "Not available yet";
 export default function CurrentJobPanel() {
   const [job, setJob] = useAtom(rastercueJobAtom);
   const [name, setName] = useAtom(desiredOutputNameAtom);
-  const [error, setError] = useState("");
-  const [now, setNow] = useState(Date.now());
+  const [error, setError] = useState(""), [now, setNow] = useState(Date.now());
   useEffect(() => {
     if (!window.rastercue) return;
-    window.rastercue.current().then(setJob).catch(e => setError(String(e)));
-    const unsubscribe = window.rastercue.onChanged(s => setJob(s.current));
+    window.rastercue.current().then(setJob).catch((reason) => setError(String(reason)));
+    const unsubscribe = window.rastercue.onChanged((snapshot) => setJob(snapshot.current));
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => { unsubscribe(); clearInterval(timer); };
   }, [setJob]);
   const file = job?.files[0];
-  const sourceBytes = job?.files.reduce((sum, f) => sum + (f.source.bytes || 0), 0);
-  const outputBytes = job?.files.filter(f => f.output?.bytes != null).reduce((sum, f) => sum + (f.output!.bytes || 0), 0);
+  const sourceBytes = job?.files.reduce((sum, item) => sum + (item.source.bytes || 0), 0);
+  const outputBytes = job?.files.filter((item) => item.output?.bytes != null).reduce((sum, item) => sum + (item.output!.bytes || 0), 0);
   async function rename() {
     if (!job || !file?.output) return;
     try { const result = await window.rastercue.rename(job.id, file.id, name); setJob(result.current); setName(""); setError(""); }
-    catch (e) { setError(String(e)); }
+    catch (reason) { setError(String(reason)); }
   }
-  return <section className="space-y-3 text-xs" aria-label="Current upscale job">
-    <div className="flex items-center justify-between"><h3 className="font-semibold text-sm">Current job</h3><span className="rounded bg-base-300 px-2 py-1 capitalize">{job?.status || "Ready"}</span></div>
-    {!job ? <p className="opacity-65">Choose an image and start an upscale. Its sizes and progress will appear here.</p> : <>
-      <p className="truncate font-medium" title={file?.source.path}>{job.kind === "batch" ? `${job.files.length} images · Batch job` : file?.source.path.split(/[\\/]/).pop() || "Loading file details…"}</p>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
-        <dt className="opacity-60">Model</dt><dd className="truncate" title={job.model}>{job.model}</dd>
-        <dt className="opacity-60">Scale</dt><dd>{job.settings.useCustomWidth ? `${job.settings.customWidth}px wide` : `${job.scale}×${job.kind === "double" ? " · two passes" : ""}`}</dd>
-        <dt className="opacity-60">Progress</dt><dd className="truncate" title={job.progress}>{job.progress || "Starting…"}</dd>
-        <dt className="opacity-60">Elapsed</dt><dd>{Math.max(0, Math.round((job.durationMs ?? (now - Date.parse(job.startedAt))) / 1000))} seconds</dd>
-        <dt className="opacity-60">Before</dt><dd>{readableBytes(sourceBytes || file?.source.bytes)}{file?.source.width ? <span className="block opacity-60">{file.source.width} × {file.source.height}px</span> : null}</dd>
-        <dt className="opacity-60">After</dt><dd>{outputBytes ? readableBytes(outputBytes) : "Not available yet"}{file?.output?.width ? <span className="block opacity-60">{file.output.width} × {file.output.height}px</span> : null}</dd>
+  return <section className="current-job" aria-label="Current upscale job">
+    <div className="field-heading"><h3>Current image</h3><div className="compact-actions"><span className={`job-status status-${job?.status || "ready"}`}>{job?.status || "Ready"}</span><InfoPopover label="Current image details">Sizes and previews come from the local job record. Rastercue verifies completed outputs before showing them here.</InfoPopover></div></div>
+    {!job ? <p className="setting-example">Choose an image and start an upscale. Preview, dimensions and progress will appear here.</p> : <>
+      <p className="current-job-name" title={file?.source.path}>{job.kind === "batch" ? `${job.files.length} images · Batch job` : basename(file?.source.path)}</p>
+      <div className="job-thumbnails" aria-label="Original and output previews">
+        <figure><div className="job-thumbnail">{file && !file.source.missing ? <ThumbnailImage jobId={job.id} fileId={file.id} kind="source" available={file.sourceThumbnail || file.thumbnail} alt="Original image thumbnail" fallback="Preview unavailable"/> : <span>Unavailable</span>}</div><figcaption>Original</figcaption></figure>
+        <figure><div className="job-thumbnail">{file?.output && !file.output.missing ? <ThumbnailImage jobId={job.id} fileId={file.id} kind="output" available={file.outputThumbnail || file.thumbnail} alt="Upscaled output thumbnail" fallback="Preview unavailable"/> : <span>{job.status === "running" ? "Processing…" : "No output"}</span>}</div><figcaption>Output</figcaption></figure>
+      </div>
+      <dl className="job-details">
+        <div><dt>Model</dt><dd title={job.model}>{job.model}</dd></div>
+        <div><dt>Backend</dt><dd>{job.settings.backendId === "cpu" ? "Rastercue CPU" : job.settings.gpuId ? `Original Vulkan · device ${job.settings.gpuId}` : "Original Vulkan · automatic"}</dd></div>
+        <div><dt>Target</dt><dd>{job.settings.useCustomWidth ? `${job.settings.customWidth}px wide` : `${job.scale}×${job.kind === "double" ? " · two passes" : ""}`}</dd></div>
+        <div><dt>Phase</dt><dd title={job.progress}>{job.progress || "Starting…"}</dd></div>
+        <div><dt>Elapsed</dt><dd>{Math.max(0, Math.round((job.durationMs ?? (now - Date.parse(job.startedAt))) / 1000))} seconds</dd></div>
       </dl>
-      <p className="truncate opacity-65" title={file?.output?.path || job.destination}>{file?.output?.path || job.destination}</p>
+      <div className="image-spec-grid">
+        <section><h4>Original</h4><p>{dimensions(file?.source.width, file?.source.height)}</p><p>{readableBytes(sourceBytes || file?.source.bytes)} · {extension(file?.source.path)}</p></section>
+        <section><h4>Output</h4><p>{dimensions(file?.output?.width, file?.output?.height)}</p><p>{outputBytes ? readableBytes(outputBytes) : "Pending"} · {file?.output ? extension(file.output.path) : "—"}</p></section>
+      </div>
     </>}
-    <label className="block space-y-1"><span className="font-medium">Output filename</span><input className="input input-bordered input-sm w-full" value={name} placeholder="Example: campaign-hero" onChange={e => { setName(e.target.value); setError(""); }} onBlur={() => window.rastercue?.setDesiredName(name).catch(e => setError(String(e)))} disabled={job?.status === "running"} /><span className="block text-[11px] opacity-60">Single images only. The selected format stays unchanged; the source is never renamed.</span></label>
+    <label className="output-name"><span>Output filename</span><input value={name} placeholder="Example: campaign-hero" onChange={(event) => { setName(event.target.value); setError(""); }} onBlur={() => window.rastercue?.setDesiredName(name).catch((reason) => setError(String(reason)))} disabled={job?.status === "running"}/><small>Single images only. The source is never renamed.</small></label>
     {job?.status === "completed" && file?.output && job.kind !== "batch" && <button className="btn btn-sm w-full" disabled={!name.trim()} onClick={rename}>Rename completed output</button>}
-    {job?.warnings.length > 0 && <p className="line-clamp-2 rounded bg-amber-400/10 p-2 text-amber-300" title={job.warnings.join("\n")}>{job.warnings[job.warnings.length - 1]}</p>}
-    {error && <p role="alert" className="line-clamp-2 text-error break-words" title={error}>{error}</p>}
+    {!!job?.warnings.length && <p className="job-warning" title={job.warnings.join("\n")}>{job.warnings[job.warnings.length - 1]}</p>}
+    {error && <p role="alert" className="text-error break-words" title={error}>{error}</p>}
   </section>;
 }

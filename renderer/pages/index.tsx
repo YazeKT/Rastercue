@@ -13,6 +13,7 @@ import {
 import useLogger from "../components/hooks/use-logger";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { classifyRastercueError } from "@common/rastercue-errors";
 import UpscaylSVGLogo from "@/components/icons/rastercue-logo";
 import { translationAtom } from "@/atoms/translations-atom";
 import Sidebar from "@/components/sidebar";
@@ -207,9 +208,11 @@ const Home = () => {
     });
     // UPSCAYL ERROR
     window.electron.on(ELECTRON_COMMANDS.UPSCAYL_ERROR, (_, data: string) => {
+      const report = classifyRastercueError(data);
       toast({
-        title: t("ERRORS.GENERIC_ERROR.TITLE"),
-        description: data,
+        title: `${report.code} · ${report.summary}`,
+        description: `Failed during ${report.phase}. ${report.recovery[0]} ${report.confirmed ? '' : 'The exact cause is not yet confirmed.'}`,
+        action: report.reportEligible ? <ToastAction altText="Create a redacted support bundle" onClick={()=>void window.rastercue.createSupportBundle()}>Support bundle</ToastAction> : undefined,
       });
       resetImagePaths();
     });

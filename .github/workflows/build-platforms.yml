@@ -28,8 +28,15 @@ jobs:
       - run: npm ci
       - run: npm run assets:fetch -- --acknowledge-model-terms
       - run: npm run release:models -- --acknowledge-model-terms
+      - run: npm run build:cpu:win
+      - run: npm run test:cpu
+        env:
+          RASTERCUE_REQUIRE_CPU: '1'
       - run: npm run build
       - run: npm run test:rastercue
+      - run: npm run test:history
+      - run: npm run test:studio
+      - run: node website/validate.mjs
       - name: Complete corresponding engine source and notices
         shell: bash
         run: |

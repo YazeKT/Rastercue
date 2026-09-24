@@ -16,6 +16,7 @@ import {
   selectedModelIdAtom,
   doubleUpscaylAtom,
   gpuIdAtom,
+  computeBackendAtom,
   saveImageAsAtom,
   userStatsAtom,
   ttaModeAtom,
@@ -66,6 +67,7 @@ const Sidebar = ({
   const [selectedModelId, setSelectedModelId] = useAtom(selectedModelIdAtom);
   const [doubleUpscayl, setDoubleUpscayl] = useAtom(doubleUpscaylAtom);
   const [gpuId, setGpuId] = useAtom(gpuIdAtom);
+  const [backendId, setBackendId] = useAtom(computeBackendAtom);
   const [saveImageAs, setSaveImageAs] = useAtom(saveImageAsAtom);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -90,6 +92,10 @@ const Sidebar = ({
   const desiredOutputName = useAtomValue(desiredOutputNameAtom);
 
   const upscaylHandler = async () => {
+    if (backendId === "cpu" && ttaMode) {
+      toast({ title: "TTA is not available on the CPU backend", description: "Turn off TTA or choose the original Vulkan backend. Rastercue did not change your settings and no job started." });
+      return;
+    }
     if (selectedModelId in MODELS) {
       try {
         const availability = await window.electron.getBuiltInModels();
@@ -103,6 +109,7 @@ const Sidebar = ({
       }
     }
     try {
+      await window.rastercueHardware.selectBackend(backendId);
       await window.rastercue?.setDesiredName(batchMode ? "" : desiredOutputName);
     } catch (error) {
       toast({ description: String(error) });
@@ -246,6 +253,8 @@ const Sidebar = ({
             setCompression={setCompression}
             gpuId={gpuId}
             setGpuId={setGpuId}
+            backendId={backendId}
+            setBackendId={setBackendId}
             saveImageAs={saveImageAs}
             setSaveImageAs={setSaveImageAs}
             logData={logData}

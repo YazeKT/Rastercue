@@ -1,4 +1,5 @@
 import { IpcRenderer } from "electron";
+import { RastercueHardwareAPI } from "@common/hardware-types";
 
 export interface IElectronAPI {
   on: (command, func?) => IpcRenderer;
@@ -22,5 +23,6 @@ export interface IElectronAPI {
 declare global {
   interface Window {
     electron: IElectronAPI;
+    rastercueHardware: RastercueHardwareAPI;
   }
 }

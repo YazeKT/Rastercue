@@ -23,7 +23,7 @@ export function ResetSettingsButton({
         onClick={async () => {
           if (progress) return;
           if (!confirm('Reset processing preferences? History, presets, favourite models and statistics will be kept.')) return;
-          for (const key of ['selectedModelId','doubleUpscayl','gpuId','saveImageAs','scale','rememberOutputFolder','savedOutputPath','noImageProcessing','compression','overwrite','ttaMode','customWidth','useCustomWidth','tileSize','copyMetadata']) localStorage.removeItem(key);
+          for (const key of ['selectedModelId','doubleUpscayl','gpuId','computeBackend','saveImageAs','scale','rememberOutputFolder','savedOutputPath','noImageProcessing','compression','overwrite','ttaMode','customWidth','useCustomWidth','tileSize','copyMetadata']) localStorage.removeItem(key);
           location.reload();
         }}
       >

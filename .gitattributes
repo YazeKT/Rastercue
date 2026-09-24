@@ -7,3 +7,4 @@
 *.ttf -text
 *.ico -text
 *.icns -text
+native/rastercue-cpu/stb_image_resize2.h -whitespace

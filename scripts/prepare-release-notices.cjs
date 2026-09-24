@@ -19,5 +19,6 @@ function collect(folder,skip,context=''){
   return content;
 }
 fs.writeFileSync(path.join(output,'DEPENDENCY-LICENSES.txt'),'Installed dependency licence texts (includes build-time dependencies; not a claim all are shipped).\n'+collect(path.join(root,'node_modules'),new Set(['.git','.cache','.bin'])));
-fs.writeFileSync(path.join(output,'NATIVE-LICENSES.txt'),'Unchanged Upscayl-NCNN 22774bc42e2bc3c785b5b585d213d960b1348ad5 and recursive source component notices. See docs/ENGINE-PROVENANCE.md and release corresponding-source archive.\n'+collect(nativeSource,new Set(['.git'])));
+const cpuSource=path.join(root,'native','rastercue-cpu');
+fs.writeFileSync(path.join(output,'NATIVE-LICENSES.txt'),'Protected Upscayl-NCNN 22774bc42e2bc3c785b5b585d213d960b1348ad5 plus the separate Rastercue NCNN CPU sidecar and their recursive source component notices. See docs/ENGINE-PROVENANCE.md and the release corresponding-source archive.\n'+collect(nativeSource,new Set(['.git']))+'\n'+collect(cpuSource,new Set(['.git','build'])));
 console.log('Release notices prepared.');

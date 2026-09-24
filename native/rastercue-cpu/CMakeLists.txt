@@ -1,0 +1,61 @@
+cmake_minimum_required(VERSION 3.20)
+cmake_policy(SET CMP0091 NEW)
+project(rastercue-cpu LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+set(NCNN_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/ncnn" CACHE PATH "Pinned NCNN source")
+set(WEBP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/libwebp" CACHE PATH "Pinned libwebp source")
+if(NOT EXISTS "${NCNN_SOURCE_DIR}/CMakeLists.txt")
+    message(FATAL_ERROR "Missing pinned NCNN source. Run scripts/build-rastercue-cpu.ps1.")
+endif()
+if(NOT EXISTS "${WEBP_SOURCE_DIR}/CMakeLists.txt")
+    message(FATAL_ERROR "Missing pinned libwebp source. Run scripts/build-rastercue-cpu.ps1.")
+endif()
+
+set(NCNN_INSTALL_SDK OFF CACHE BOOL "" FORCE)
+set(NCNN_VULKAN OFF CACHE BOOL "" FORCE)
+set(NCNN_OPENMP ON CACHE BOOL "" FORCE)
+set(NCNN_RUNTIME_CPU ON CACHE BOOL "" FORCE)
+set(NCNN_BUILD_BENCHMARK OFF CACHE BOOL "" FORCE)
+set(NCNN_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(NCNN_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(NCNN_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(NCNN_DISABLE_RTTI ON CACHE BOOL "" FORCE)
+set(NCNN_DISABLE_EXCEPTION ON CACHE BOOL "" FORCE)
+set(NCNN_PIXEL_ROTATE OFF CACHE BOOL "" FORCE)
+set(NCNN_PIXEL_AFFINE OFF CACHE BOOL "" FORCE)
+set(NCNN_PIXEL_DRAWING OFF CACHE BOOL "" FORCE)
+
+set(WEBP_BUILD_ANIM_UTILS OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_CWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_DWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_GIF2WEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_IMG2WEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_VWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_WEBPINFO OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_WEBPMUX OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_WEBP_JS OFF CACHE BOOL "" FORCE)
+
+add_subdirectory("${NCNN_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/ncnn")
+add_subdirectory("${WEBP_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/libwebp")
+
+find_package(OpenMP)
+add_executable(rastercue-cpu main.cpp realesrgan.cpp)
+target_include_directories(rastercue-cpu PRIVATE
+    "${NCNN_SOURCE_DIR}/src"
+    "${CMAKE_BINARY_DIR}/ncnn/src"
+    "${WEBP_SOURCE_DIR}/src"
+)
+target_link_libraries(rastercue-cpu PRIVATE ncnn webp)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(rastercue-cpu PRIVATE OpenMP::OpenMP_CXX)
+endif()
+
+if(MSVC)
+    target_compile_options(rastercue-cpu PRIVATE /O2 /utf-8)
+endif()
