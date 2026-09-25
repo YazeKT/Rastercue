@@ -7,6 +7,10 @@ const assert = require('assert/strict');
 const { EventEmitter } = require('events');
 const ts = require('typescript');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rastercue-history-test-'));
+const canonicalPath = target => {
+  const resolved = fs.realpathSync.native(target);
+  return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
+};
 const handlers = new Map();
 const ipcMain = new EventEmitter();
 ipcMain.handle = (channel, handler) => handlers.set(channel, handler);
@@ -55,7 +59,7 @@ async function settled() {
   assert.equal(job.settings.tileSize, 32); assert.equal(job.settings.ttaMode, true);
   assert.deepEqual(payload, { imagePath: input, outputPath: root, model: 'test', scale: '4', saveImageAs: 'jpg', tileSize: 32, ttaMode: true });
   assert.equal(sent.find(args => args[0] === C.UPSCAYL_DONE)[1], output, 'Original completion payload stays unchanged');
-  assert.equal(file.output.path, path.join(root, 'campaign.jpg'));
+  assert.equal(canonicalPath(file.output.path), canonicalPath(path.join(root, 'campaign.jpg')));
   assert.equal(file.source.bytes, 14); assert.equal(file.output.bytes, 20);
   assert.equal(await api('getThumbnail', job.id, file.id, 'source'), `data:image/png;base64,${Buffer.from('thumbnail').toString('base64')}`);
   assert.equal(await api('getThumbnail', job.id, file.id, 'output'), `data:image/png;base64,${Buffer.from('thumbnail').toString('base64')}`);
@@ -67,7 +71,7 @@ async function settled() {
   await assert.rejects(api('rename', job.id, file.id, 'CON'), /filename/);
   await assert.rejects(api('rename', 'unknown', file.id, 'next'), /not found/);
   state = await api('rename', job.id, file.id, 'approved.jpg');
-  assert.equal(state.records[0].files[0].output.path, path.join(root, 'approved.jpg'));
+  assert.equal(canonicalPath(state.records[0].files[0].output.path), canonicalPath(path.join(root, 'approved.jpg')));
   assert.ok(fs.existsSync(path.join(root, 'history', 'history.json')));
   assert.ok(fs.existsSync(path.join(root, 'history', 'history.backup.json')));
   await assert.rejects(api('clear', false), /Confirm/);
@@ -98,7 +102,7 @@ async function settled() {
   const movedParent = path.join(root, 'moved'); fs.mkdirSync(movedParent);
   electron.dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [movedParent] });
   state = await api('relocate');
-  assert.equal(state.folder, path.join(movedParent, 'Rastercue-history'));
+  assert.equal(canonicalPath(state.folder), canonicalPath(path.join(movedParent, 'Rastercue-history')));
   assert.ok(fs.existsSync(path.join(root, 'history', 'history.json')), 'Relocation retains old history as recovery copy');
   assert.ok(fs.existsSync(path.join(state.folder, 'history.json')));
   assert.equal((await api('relocate')).folder, state.folder, 'Same-folder relocation is a safe no-op');
