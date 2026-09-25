@@ -14,6 +14,20 @@ $webpRevision = "8ea81561d2fdd382da60f57958741a7c23a18eb6"
 $cmakeVersion = "4.4.3"
 $cmakeArchiveHash = "4d52ebab7193a698651639ed80d8d04fd903358843572cf44c7fd234cb7c26ab"
 
+function Get-Sha256([string]$Path) {
+  $stream = [System.IO.File]::OpenRead($Path)
+  try {
+    $algorithm = [System.Security.Cryptography.SHA256]::Create()
+    try {
+      return ([System.BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace("-", "").ToLowerInvariant()
+    } finally {
+      $algorithm.Dispose()
+    }
+  } finally {
+    $stream.Dispose()
+  }
+}
+
 function Get-PinnedRepository([string]$Url, [string]$Revision, [string]$Destination) {
   if (-not (Test-Path (Join-Path $Destination ".git"))) {
     New-Item -ItemType Directory -Force $Destination | Out-Null
@@ -62,13 +76,16 @@ if (-not $cmake) {
     if (-not (Test-Path $archive)) {
       Invoke-WebRequest "https://github.com/Kitware/CMake/releases/download/v$cmakeVersion/cmake-$cmakeVersion-windows-x86_64.zip" -OutFile $archive
     }
-    $actual = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+    $actual = Get-Sha256 $archive
     if ($actual -ne $cmakeArchiveHash) { throw "CMake archive checksum mismatch." }
     Expand-Archive -LiteralPath $archive -DestinationPath $toolsRoot -Force
   }
 }
 
-& $cmake -S $sourceRoot -B $buildRoot -A x64
+# CMake 4 removed implicit compatibility with policy versions older than 3.5.
+# The pinned NCNN revision still declares a 2.8.12 minimum, so set the policy
+# floor explicitly without modifying or repackaging the protected dependency.
+& $cmake -S $sourceRoot -B $buildRoot -A x64 "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 if ($LASTEXITCODE -ne 0) { throw "CMake configuration failed." }
 & $cmake --build $buildRoot --config $Configuration --target rastercue-cpu -j 2
 if ($LASTEXITCODE -ne 0) { throw "CPU sidecar build failed." }
@@ -79,6 +96,6 @@ if (-not (Test-Path $binary)) { throw "Expected CPU sidecar was not produced: $b
 if ($LASTEXITCODE -ne 0) { throw "CPU sidecar probe failed." }
 $stagedBinary = Join-Path $repoRoot "resources\win\bin\rastercue-cpu.exe"
 Copy-Item -LiteralPath $binary -Destination $stagedBinary -Force
-Get-FileHash -Algorithm SHA256 $binary
+Write-Output "SHA256 $(Get-Sha256 $binary)"
 Write-Output "Built $binary"
 Write-Output "Staged $stagedBinary"
